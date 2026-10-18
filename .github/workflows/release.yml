@@ -76,6 +76,7 @@ jobs:
           cd "$RUNNER_TEMP"
           devpocket --version
           devpocket tools list --json
+          assetguard --root "$GITHUB_WORKSPACE/examples/web-dist" --max-total-gzip-kib 16
       - name: Prepare release notes and checksums
         if: steps.state.outputs.exists != 'true'
         run: python .github/scripts/prepare_release.py --title DevPocket
