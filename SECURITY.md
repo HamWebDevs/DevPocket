@@ -10,3 +10,5 @@ DevPocket is an early developer utility, not a security boundary.
 - A child process can start background writers. Stop them before restoration. Windows timeout handling kills only the immediate child.
 
 For a vulnerability, avoid posting credentials, exploit-bearing private data or confidential reports in a public issue. Use GitHub's private vulnerability reporting if enabled on the repository; otherwise open a minimal issue requesting a private reporting channel without exploit details.
+
+LogLens reads untrusted log text without executing it, removes common terminal controls and applies best-effort redaction. Its grouping intentionally loses some detail; preserve original logs separately. ImportDoctor does not import inspected target modules, but interpreter startup hooks and custom path hooks remain outside its control. Resolution findings are hints, not a safety audit or runtime guarantee.

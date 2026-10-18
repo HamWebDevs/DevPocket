@@ -1,9 +1,9 @@
-"""CLI entry points for the toolkit and five standalone aliases."""
+"""CLI entry points for the toolkit and seven standalone aliases."""
 from __future__ import annotations
 import argparse
 import sys
 from . import __version__
-from . import envtwin, flaketrail, oopsfile, reporadar, undorun
+from . import envtwin, flaketrail, oopsfile, reporadar, undorun, loglens, importdoctor
 
 
 def command_options(parser):
@@ -13,7 +13,7 @@ def command_options(parser):
 
 
 def parser():
-    p = argparse.ArgumentParser(prog="devpocket", description="Five tools for the frustrating parts of programming.")
+    p = argparse.ArgumentParser(prog="devpocket", description="Seven tools for the frustrating parts of programming.")
     p.add_argument("--version", action="version", version=__version__)
     tools = p.add_subparsers(dest="tool", required=True)
     o = tools.add_parser("oopsfile", help="Capture a failed command as a Markdown debugging report")
@@ -52,6 +52,21 @@ def parser():
     r.add_argument("--root", default=".")
     r.add_argument("--json", action="store_true")
     r.set_defaults(handler=reporadar.execute)
+    l = tools.add_parser("loglens", help="Group repeated errors in text, JSONL or gzip logs")
+    l.add_argument("paths", nargs="+", help="Log files; use - for standard input")
+    l.add_argument("--all", action="store_true", help="Include all levels, not just warnings and errors")
+    l.add_argument("--exact", action="store_true", help="Do not normalise dynamic numbers or IDs")
+    l.add_argument("--top", type=int, default=10, help="Maximum groups printed in text mode")
+    l.add_argument("--max-groups", type=int, default=2000, help="Bound distinct groups kept in memory")
+    l.add_argument("--json", action="store_true", help="Emit all retained groups as JSON")
+    l.set_defaults(handler=loglens.execute)
+    i = tools.add_parser("importdoctor", help="Diagnose Python import resolution without importing target code")
+    i.add_argument("module", help="Dotted import name, e.g. requests or yaml.loader")
+    i.add_argument("--root", default=".", help="Project directory to place first on the inspected search path")
+    i.add_argument("--distribution", help="Optional pip distribution name, e.g. PyYAML for yaml")
+    i.add_argument("--expect-python", help="Expected interpreter executable path, for comparison only")
+    i.add_argument("--json", action="store_true")
+    i.set_defaults(handler=importdoctor.execute)
     return p
 
 
@@ -65,7 +80,7 @@ def main(argv=None):
             p.error("a command is required after --")
     try:
         return args.handler(args)
-    except (OSError, ValueError, KeyError, TypeError) as exc:
+    except (OSError, EOFError, ValueError, KeyError, TypeError) as exc:
         print(f"devpocket: {exc}", file=sys.stderr)
         return 2
     except KeyboardInterrupt:
@@ -91,3 +106,11 @@ def flake_main():
 
 def radar_main():
     return main(["reporadar", *sys.argv[1:]])
+
+
+def log_main():
+    return main(["loglens", *sys.argv[1:]])
+
+
+def import_main():
+    return main(["importdoctor", *sys.argv[1:]])

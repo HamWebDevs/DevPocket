@@ -1,173 +1,114 @@
-# DevPocket
+![DevPocket — small tools, fewer rabbit holes](docs/assets/banner.svg)
 
-**Five small tools for the frustrating parts of programming.**
+[![Tests](https://github.com/instalsxx/DevPocket/actions/workflows/tests.yml/badge.svg)](https://github.com/instalsxx/DevPocket/actions/workflows/tests.yml)
+![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&logoColor=white)
+[![MIT licence](https://img.shields.io/badge/licence-MIT-82edc4)](LICENSE)
+![Runtime dependencies: zero](https://img.shields.io/badge/runtime_dependencies-zero-82edc4)
 
-Turn a failed command into a useful bug report. Compare environments. Undo a script's file changes. Catch flaky commands. Find the setup gaps hiding in a repository.
+**Seven small command-line tools for the frustrating parts of programming.**
 
-Python 3.10+ · No runtime dependencies · Local files · No account or AI API needed
+Make error reports worth reading. Compare environments. Restore a script's file changes. Investigate flaky tests, messy logs and Python imports — without an account, a server or an AI subscription.
 
-| Tool | The question it answers |
-| --- | --- |
-| **Oopsfile** | What context should I include with this error? |
-| **EnvTwin** | What's different between these two Python environments? |
-| **UndoRun** | What did that script change, and can I restore the files? |
-| **FlakeTrail** | Does this command fail intermittently, and what differs when it does? |
-| **RepoRadar** | Which small setup and documentation problems did we miss? |
+[Quick start](#quick-start) · [The toolkit](#the-toolkit) · [Documentation](#documentation) · [Contributing](CONTRIBUTING.md) · [Changelog](CHANGELOG.md)
 
-## Install
+## Quick start
 
-From a cloned checkout or extracted source archive:
+Install from this repository in your preferred Python environment:
 
 ```bash
-python -m pip install .
+python -m pip install "git+https://github.com/instalsxx/DevPocket.git"
 devpocket --help
 ```
 
-For development, use `python -m pip install -e .`. Nothing has been published to PyPI; do not assume an identically named package there is this project.
-
-No installation is needed to try it from the checkout:
+Or clone it and run directly, with no installation:
 
 ```bash
-python -m devpocket --help
-python -m devpocket reporadar --root .
+git clone https://github.com/instalsxx/DevPocket.git
+cd DevPocket
+python -m devpocket loglens examples/events.log
+python -m devpocket importdoctor json
 ```
 
-All five tools are also available as standalone commands after installation: `oopsfile`, `envtwin`, `undorun`, `flaketrail`, `reporadar`.
+Requires **Python 3.10+**. After cloning, `python -m pip install .` adds the `devpocket` command and all seven standalone aliases. This project is not published to PyPI; use the source above.
 
-## Oopsfile — useful error reports, in one command
+## The toolkit
+
+| Command | Use it when… | Guide |
+| --- | --- | --- |
+| `oopsfile` | A command fails and you need a focused debugging report. | [Error reports](docs/cli-reference.md#oopsfile--useful-error-reports-in-one-command) |
+| `envtwin` | Something works on one machine but not another. | [Environment comparisons](docs/cli-reference.md#envtwin--compare-what-actually-differs) |
+| `undorun` | You want a backup and a record of a script's file changes. | [Backups and restoration](docs/cli-reference.md#undorun--inspect-and-reverse-scoped-file-changes) |
+| `flaketrail` | A test passes sometimes and fails other times. | [Repeated runs](docs/cli-reference.md#flaketrail--make-intermittent-failure-visible) |
+| `reporadar` | You want to catch the little setup problems before sharing a repo. | [Repository checks](docs/cli-reference.md#reporadar--the-small-checks-people-forget) |
+| **`loglens`** | Thousands of log lines hide a few recurring errors. | [Log analysis](docs/loglens.md) |
+| **`importdoctor`** | Python imports the wrong thing — or cannot find it at all. | [Import diagnostics](docs/importdoctor.md) |
+
+Use either `devpocket TOOL ...` or the standalone `TOOL ...` after installation.
+
+## A few useful commands
 
 ```bash
+# Failed command → a local Markdown report
 oopsfile run -- python app.py
+
+# Group recurring errors in a large or compressed log
+loglens application.log application.log.gz --top 5
+
+# Check import resolution without executing the target package
+importdoctor requests --root .
+
+# Compare captured Python environments
+envtwin diff laptop.json ci.json
+
+# Repeat an intermittent test and keep the evidence
+flaketrail --runs 20 -- python -m unittest tests.test_sometimes
 ```
 
-On failure, creates `oops-report.md` with the command, exit code, timeout status, bounded stdout/stderr and a snapshot of the reporting Python interpreter's environment. On success it creates no report. The wrapped command's exit status is preserved; timeout is 124.
+Oopsfile and FlakeTrail examples preserve failures through a nonzero exit status. Their output reports are local; review them before sharing.
 
-Opt in to local source context and Git change statistics:
+### What LogLens shows
 
-```bash
-oopsfile run --include-source --include-diff --output bug.md -- python app.py
+With the bundled `examples/events.log` fixture:
+
+```text
+4 records scanned; 3 matched; 2 groups
+
+2x ERROR | request <n> failed: upstream timeout
+  first seen: examples/events.log:2 (2026-10-18T10:00:01Z)
+  last seen: examples/events.log:3 (2026-10-18T10:00:02Z)
+  sample: request 481 failed: upstream timeout
 ```
 
-Source capture reads at most five project-local Python traceback files, up to three lines either side of the frame. Git capture includes unstaged diff statistics, not patch contents or staged changes. Environment details describe the interpreter running DevPocket; if the wrapped command uses another interpreter, capture that environment separately with EnvTwin.
+LogLens groups variable numbers and IDs by default. Use `--exact` when different numbers, such as HTTP status codes, must remain separate. JSON output includes counts, samples and first/last locations for every retained group.
 
-Output can contain source or sensitive information even without `--include-source`. Known token patterns, credential assignments, bearer tokens, credentialed HTTP URLs and private key blocks are redacted on a best-effort basis. **Review every report before sharing it.** No report is uploaded automatically.
+## Designed to stay small
 
-## EnvTwin — compare what actually differs
+- **No runtime dependencies.** Python's standard library does the work.
+- **Local operation.** No automatic uploads or telemetry. Wrapped commands retain their own normal network behaviour.
+- **Useful evidence.** Reports show locations, captured differences and explicit limits.
+- **Predictable file handling.** Reports never silently overwrite an existing file. UndoRun previews restoration and checks for later edits before applying it.
+- **Portable source.** The test workflow covers Linux, macOS and Windows on Python 3.10, 3.12 and 3.14.
 
-On machine A, in the environment you want to inspect:
+**Know the boundaries:** redaction is best-effort; UndoRun is a scoped backup tool, not a sandbox; LogLens grouping and ImportDoctor's static resolution are diagnostic clues. Each guide describes its limits. See [SECURITY.md](SECURITY.md).
 
-```bash
-envtwin snapshot --output machine-a.json
-```
+## Documentation
 
-On machine B:
-
-```bash
-envtwin snapshot --output machine-b.json
-```
-
-Bring the two JSON files together:
-
-```bash
-envtwin diff machine-a.json machine-b.json
-envtwin diff machine-a.json machine-b.json --json
-```
-
-Compares Python version/implementation, virtual environment status, OS/release/architecture/libc, installed Python distribution versions, presence of common developer tools and presence of a small allowlist of environment variable names. It never collects environment variable values, hostname, username, executable paths or full configuration files. Package names and versions can still be private information.
-
-It reports differences, not guaranteed causes. Tool versions and arbitrary system-library inventories are not captured in v0.1. Use the same DevPocket version on both machines.
-
-## UndoRun — inspect and reverse scoped file changes
-
-```bash
-undorun run --root ./scratch-project -- python generate.py
-```
-
-Makes a local backup **before** executing the command, prints the changed files and gives you a run ID. Preview restoration first, then apply it:
-
-```bash
-undorun restore RUN_ID --root ./scratch-project
-undorun restore RUN_ID --root ./scratch-project --apply
-```
-
-Replace `RUN_ID` with the printed ID. Restoration removes captured newly created files and restores captured modified/deleted regular files and their permission bits. It refuses the entire restore during preflight if an affected file has changed again, a target traverses a symlink, or a backup is damaged.
-
-Backups live in `.devpocket/runs/` beneath the selected root. Keep them private. They are intentionally ignored by Git. Run against a small project copy and stop other writers during capture and restoration.
-
-- This is a scoped backup utility, **not a sandbox or a way to trust unknown code**. The command retains all normal permissions and network access.
-- Changes outside `--root` cannot be restored. Files in excluded directories, secret-like files, symlinks, databases and special files are not captured. Renames appear as deletion/creation.
-- Excludes include `.git`, `.venv`, `venv`, `node_modules`, caches, `dist`, `build` and `.devpocket`. Secret-like exclusions include `.env*` (except example templates), private keys, credential/secret filenames and `*.db`/`*.sqlite*` files. These are heuristics, not exhaustive classifications.
-- Add exclusions with repeatable relative globs, e.g. `--exclude 'uploads/*'`. Directory patterns are matched against the relative directory path, too.
-- Backup limits: 5,000 files, 64 MiB total, 8 MiB per file; checked before the command runs. Inventory limit: 20,000 files. If post-run inventory fails, backups remain but automatic restoration is unavailable without a completed after-journal.
-- Empty directories, ownership, ACLs, extended attributes and timestamps are not restored. Restoration is atomic per file, not a transaction across all files; an OS error during application can leave a partial restore. No concurrent-run locking.
-- Interrupted runs retain the before-backup but may have no after-journal. On POSIX timeouts kill the command's process group; on Windows only the immediate child is killed. Do not leave background writers running.
-
-## FlakeTrail — make intermittent failure visible
-
-```bash
-flaketrail --runs 20 --timeout 30 -- python -m unittest tests.test_sometimes
-```
-
-Runs the command sequentially, prints each outcome and saves `flake-report.json`. Includes exit status, duration, timeout/truncation flags, bounded output for each run, pass/fail median duration and a unified diff between the first passing and first failing output.
-
-```bash
-flaketrail --runs 5 --output flakes.json -- python flaky_script.py
-```
-
-It reruns the command with its normal side effects. Use repeatable tests or a disposable fixture. There is no automatic state reset, random seed injection, test-order randomisation, resource tracing or root-cause claim. Identical output with different exit codes can legitimately produce an empty output diff.
-
-## RepoRadar — the small checks people forget
-
-```bash
-reporadar --root .
-reporadar --root . --json
-```
-
-Read-only, offline heuristics for:
-
-- Missing root README or licence.
-- Python projects without obvious test files.
-- Broken relative Markdown file links outside fenced code blocks.
-- Literal `node file.js` / `python file.py` references to missing files in `package.json` scripts.
-- Literal required `os.environ['NAME']` accesses absent from root `.env.example`, `.env.sample` or `.env.template`.
-- Malformed `package.json` files encountered by the scan.
-
-Findings include relative paths and line numbers where available. It does not run setup instructions, package scripts or network checks, validate every dependency constraint, parse every Markdown dialect, or prove a project is correct. Treat findings as review prompts.
-
-## CLI conventions
-
-Put options **before** the wrapped command and use `--` to separate it. Commands run as argument lists, without a shell, with stdin disconnected. Pipes, redirects and shell built-ins require an explicit shell that you choose, e.g. `-- sh -c '...'` on POSIX. Shell behaviour is then your responsibility.
-
-Each stream retains its last 128 KiB. Oopsfile/FlakeTrail redact output before printing or saving; UndoRun prints raw output as a normal command runner. Reports are UTF-8, created with restrictive permissions where supported, and **never overwrite an existing report**: choose a fresh `--output` or move the previous file. Output paths are relative to the terminal's original working directory, even when `--root` is supplied.
-
-| Command | Exit status |
-| --- | --- |
-| Oopsfile / UndoRun run | Wrapped command status; timeout 124 |
-| EnvTwin diff | 0 same captured fields; 1 different |
-| FlakeTrail | 0 all runs passed; 1 one or more failures |
-| RepoRadar | 0 no findings; 1 findings |
-| Usage / tool error | 2 |
-| Interrupted | 130 |
-
-## Try the examples
-
-From this checkout:
-
-```bash
-python -m devpocket oopsfile run --include-source -- python examples/crash.py
-python -m devpocket flaketrail --runs 4 -- python examples/flaky.py
-```
-
-The crash deliberately fails. The flaky example alternates success/failure using a counter in your system temporary directory. Both commands deliberately return nonzero.
+- [CLI reference: original five tools, flags and exit codes](docs/cli-reference.md)
+- [LogLens: text, JSONL, compressed logs and grouping](docs/loglens.md)
+- [ImportDoctor: shadows, namespaces and interpreter mismatches](docs/importdoctor.md)
+- [Changelog](CHANGELOG.md)
+- [Contribution guide](CONTRIBUTING.md)
 
 ## Development
 
 ```bash
+python -m pip install -e .
 python -m unittest discover -s tests -v
+python -m devpocket reporadar --root .
 ```
 
-Tests use isolated temporary directories and cover command capture, timeouts, redaction, report boundaries, environment comparisons, mixed outcomes, repository findings and restore conflicts. GitHub Actions is configured for Python 3.10, 3.12 and 3.14 on Linux, macOS and Windows. Local validation does not establish that the entire matrix has passed.
+Tests use isolated temporary fixtures. Bug reports, practical examples and focused pull requests are welcome. Open an [issue](https://github.com/instalsxx/DevPocket/issues) or read the [contribution guide](CONTRIBUTING.md).
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for scope and [SECURITY.md](SECURITY.md) for security considerations.
+---
 
-MIT licensed. Built by Anthony Fulton.
+MIT licensed · Built by [Anthony Fulton](https://github.com/instalsxx)

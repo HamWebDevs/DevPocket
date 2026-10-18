@@ -1,0 +1,4 @@
+2026-10-18T10:00:00Z INFO worker started
+2026-10-18T10:00:01Z ERROR request 481 failed: upstream timeout
+2026-10-18T10:00:02Z ERROR request 902 failed: upstream timeout
+2026-10-18T10:00:03Z WARNING queue depth 42 exceeds limit
