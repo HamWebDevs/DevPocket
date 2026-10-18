@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 import hashlib
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import re
 from typing import Any, Callable
 
@@ -26,7 +26,7 @@ class Finding:
         if self.line is not None and (type(self.line) is not int or self.line < 1):
             raise ValueError("Finding lines must be positive integers")
         if self.path is not None:
-            path = Path(self.path)
+            path = PurePosixPath(self.path)
             if path.is_absolute() or ".." in path.parts or "\\" in self.path or ":" in self.path:
                 raise ValueError("Finding paths must be relative POSIX paths inside the project")
 
