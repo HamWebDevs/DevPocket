@@ -2,6 +2,10 @@
 
 User-visible changes are recorded here. Repository versions are not PyPI releases.
 
+## Unreleased
+
+- Credit HamWebDevs consistently in the README, licence and package metadata.
+
 ## 0.3.0 — 2026-10-18
 
 ### Added

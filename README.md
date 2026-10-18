@@ -152,4 +152,4 @@ Tests use isolated temporary fixtures. The extension verification script builds 
 
 ---
 
-MIT licensed · Built by [Anthony Fulton](https://github.com/HamWebDevs)
+MIT licensed · Built by [HamWebDevs](https://github.com/HamWebDevs)
