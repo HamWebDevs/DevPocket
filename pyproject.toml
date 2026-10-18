@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "devpocket-toolkit"
+version = "0.1.0"
+description = "Five small tools for the frustrating parts of programming."
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [{name = "Anthony Fulton"}]
+dependencies = []
+classifiers = ["Programming Language :: Python :: 3", "Environment :: Console", "Operating System :: OS Independent"]
+
+[project.scripts]
+devpocket = "devpocket.cli:main"
+oopsfile = "devpocket.cli:oops_main"
+envtwin = "devpocket.cli:env_main"
+undorun = "devpocket.cli:undo_main"
+flaketrail = "devpocket.cli:flake_main"
+reporadar = "devpocket.cli:radar_main"
+
+[tool.setuptools.packages.find]
+include = ["devpocket*"]
