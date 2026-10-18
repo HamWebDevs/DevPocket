@@ -1,4 +1,4 @@
 include LICENSE README.md CHANGELOG.md CONTRIBUTING.md SECURITY.md AGENTS.md
 recursive-include docs *.md *.svg
-recursive-include examples *.py *.toml *.md *.log
+recursive-include examples *.py *.toml *.md *.log *.json *.html *.css *.js
 global-exclude *.py[cod]

@@ -40,7 +40,7 @@ Independent checks run concurrently in separate worker processes. `needs` is a l
 
 Limits: 100 configured checks; 1–8 parallel workers; default 4 workers and 60 seconds per check. Per-check `timeout` is greater than zero and at most 3,600 seconds. Worker results and inputs have the SDK limits described in [plugins.md](plugins.md). Interrupting a pipeline signals its active workers to stop; process cleanup limits still apply.
 
-## Structured runs for all seven tools
+## Structured runs for built-in tools
 
 ```bash
 devpocket run reporadar --format json

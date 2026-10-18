@@ -7,7 +7,7 @@
 
 **An extensible toolkit for local developer diagnostics.**
 
-Seven built-in tools, a versioned plugin SDK, parallel project checks, opt-in content-addressed caching, baseline-aware quality gates and MCP connectivity. Run diagnostics locally, wire them into CI, or let a coding assistant call the same tools — without a hosted service or runtime dependencies.
+Eight built-in tools, production-build audits, a versioned plugin SDK, parallel project checks, opt-in content-addressed caching, baseline-aware quality gates and MCP connectivity. Run diagnostics locally, wire them into CI, or let a coding assistant call the same tools — without a hosted service or runtime dependencies.
 
 [Quick start](#quick-start) · [Build a plugin](#build-and-connect-your-own-tools) · [MCP](docs/mcp.md) · [The toolkit](#the-toolkit) · [Documentation](#documentation) · [Contributing](CONTRIBUTING.md) · [Changelog](CHANGELOG.md)
 
@@ -29,7 +29,19 @@ python -m devpocket loglens examples/events.log
 python -m devpocket importdoctor json
 ```
 
-Requires **Python 3.10+**. After cloning, `python -m pip install .` adds the `devpocket` command and all seven standalone aliases. This project is not published to PyPI; use the source above.
+Requires **Python 3.10+**. After cloning, `python -m pip install .` adds the `devpocket` command and all eight standalone aliases. Versioned wheels are also available in [GitHub releases](https://github.com/HamWebDevs/DevPocket/releases). This project is not published to PyPI.
+
+## Inspect the build you will deploy
+
+```bash
+assetguard --root dist --snapshot artifacts/build-before.json
+# Make your change and finish your normal build.
+assetguard --root dist --baseline artifacts/build-before.json --max-growth-kib 32
+```
+
+**AssetGuard** measures raw/gzip sizes, catches missing HTML resources and deployment-path mistakes, flags private files and source maps, and finds identical content across renamed chunks. Choose total, individual-asset and growth budgets for CI. It works on finished artifacts from any toolchain and executes no target code. Gzip estimates describe build files; they are not browser transfer or route-performance measurements.
+
+Try `assetguard --root examples/web-dist` from this checkout. [Build comparisons, budgets, SARIF and MCP →](docs/assetguard.md)
 
 ## Configure checks once
 
@@ -85,6 +97,7 @@ Configure a compatible MCP client to launch the local stdio server. It exposes r
 
 | Command | Use it when… | Guide |
 | --- | --- | --- |
+| **`assetguard`** | You need to review production assets, resource links and build-size regressions before deployment. | [Build auditing](docs/assetguard.md) |
 | `oopsfile` | A command fails and you need a focused debugging report. | [Error reports](docs/cli-reference.md#oopsfile--useful-error-reports-in-one-command) |
 | `envtwin` | Something works on one machine but not another. | [Environment comparisons](docs/cli-reference.md#envtwin--compare-what-actually-differs) |
 | `undorun` | You want a backup and a record of a script's file changes. | [Backups and restoration](docs/cli-reference.md#undorun--inspect-and-reverse-scoped-file-changes) |
@@ -146,6 +159,7 @@ LogLens groups variable numbers and IDs by default. Use `--exact` when different
 ## Documentation
 
 - [Plugin SDK, package discovery and reference implementation](docs/plugins.md)
+- [AssetGuard: production builds, content snapshots and size budgets](docs/assetguard.md)
 - [Project checks, structured runs, reports and baselines](docs/project-checks.md)
 - [Deterministic result caching, invalidation and controls](docs/cache.md)
 - [MCP server and client connection](docs/mcp.md)

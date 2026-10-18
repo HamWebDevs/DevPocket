@@ -21,6 +21,8 @@ jobs:
       - run: devpocket --help
       - run: loglens examples/events.log --json
       - run: importdoctor json --json
+      - run: assetguard --root examples/web-dist --max-total-gzip-kib 16
+      - run: devpocket check --config examples/web-checks.json --format json
       - run: python -m devpocket reporadar --root .
       - run: devpocket check --format json
       - run: python examples/verify_extension.py --no-build-isolation

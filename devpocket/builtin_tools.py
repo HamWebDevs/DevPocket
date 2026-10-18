@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 from types import SimpleNamespace
 
-from . import envtwin, flaketrail, importdoctor, loglens, oopsfile, reporadar, undorun
+from . import assetguard, envtwin, flaketrail, importdoctor, loglens, oopsfile, reporadar, undorun
 from .common import load_json
 from .sdk import Finding, ToolResult, ToolSpec
 
@@ -75,11 +75,26 @@ def command_tool(name, ctx, params):
     return ToolResult(f"{name} completed with exit code {code}", data={"output": params.get("output"), "command_exit_code": code}, exit_code=code)
 
 
+def assets(ctx, params):
+    relative = params.get("path", "dist")
+    if (ctx.root / relative).is_symlink():
+        raise ValueError("Build root cannot be a symlink")
+    path = ctx.resolve(relative)
+    baseline = load_json(ctx.resolve(params["baseline"])) if params.get("baseline") else None
+    report = assetguard.analyse(path, baseline=baseline, **{key: params[key] for key in ("public_path", "max_total_gzip_kib", "max_asset_gzip_kib", "max_growth_kib") if key in params})
+    findings = []
+    for item in report["findings"]:
+        location = (path / item["path"]).relative_to(ctx.root).as_posix() if item.get("path") else None
+        findings.append(Finding(item["rule"], item["message"], severity=item["severity"], path=location, line=item.get("line")))
+    return ToolResult(f"Production build: {report['summary']['files']} assets, {report['summary']['gzip_bytes']} bytes gzip estimate", findings, report)
+
+
 def specs():
     boolean = {"type": "boolean"}
     command = {"type": "array", "items": {"type": "string", "maxLength": 16384}, "minItems": 1, "maxItems": 256}
     common = {"command": command, "timeout": {"type": "number", "minimum": .01, "maximum": 3600}}
     result = [
+        ToolSpec("assetguard", "Audit a finished web build for missing resources, exposed files, duplicate content and size budgets", obj({"path": string("Finished build directory, relative to project root"), "public_path": string("Deployment URL prefix, e.g. /docs/"), "baseline": string("Previous AssetGuard snapshot"), **{key: {"type": "number", "minimum": 0, "maximum": 1048576} for key in ("max_total_gzip_kib", "max_asset_gzip_kib", "max_growth_kib")}}), assets),
         ToolSpec("reporadar", "Offline repository setup and documentation checks", obj(), radar),
         ToolSpec("envtwin", "Snapshot the reporting Python environment or compare saved snapshots", obj({"action": {"type": "string", "enum": ["snapshot", "diff"]}, "left": string(), "right": string()}), environment),
         ToolSpec("importdoctor", "Inspect import resolution without importing target modules", obj({"module": string(), "distribution": string(), "expect_python": string()}, ["module"]), imports),

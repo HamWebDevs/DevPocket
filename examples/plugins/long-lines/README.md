@@ -2,7 +2,7 @@
 
 A complete DevPocket API v1 plugin example. Change the schema, runner and tests to build your own check.
 
-Install DevPocket 0.4 first, then install this plugin in the same Python environment:
+Install DevPocket 0.4 or 0.5 first, then install this plugin in the same Python environment:
 
 ```bash
 python -m pip install .

@@ -1,9 +1,9 @@
-"""CLI entry points for the toolkit and seven standalone aliases."""
+"""CLI entry points for the toolkit and standalone aliases."""
 from __future__ import annotations
 import argparse
 import sys
 from . import __version__
-from . import envtwin, flaketrail, oopsfile, reporadar, undorun, loglens, importdoctor
+from . import assetguard, envtwin, flaketrail, oopsfile, reporadar, undorun, loglens, importdoctor
 
 
 def command_options(parser):
@@ -67,6 +67,16 @@ def parser():
     i.add_argument("--expect-python", help="Expected interpreter executable path, for comparison only")
     i.add_argument("--json", action="store_true")
     i.set_defaults(handler=importdoctor.execute)
+    a = tools.add_parser("assetguard", help="Audit production assets, resource links and gzip size regressions offline")
+    a.add_argument("--root", default="dist", help="Finished build directory (default: dist)")
+    a.add_argument("--public-path", default="/", help="Deployment URL prefix, e.g. /docs/")
+    a.add_argument("--baseline", help="Previous AssetGuard snapshot for content/size comparison")
+    a.add_argument("--snapshot", help="Write a fresh snapshot outside the build directory")
+    a.add_argument("--max-total-gzip-kib", type=float, help="Maximum combined gzip estimate in KiB")
+    a.add_argument("--max-asset-gzip-kib", type=float, help="Maximum individual asset gzip estimate in KiB")
+    a.add_argument("--max-growth-kib", type=float, help="Maximum gzip growth in KiB; requires --baseline")
+    a.add_argument("--json", action="store_true")
+    a.set_defaults(handler=assetguard.execute)
     from .platform_cli import register
     register(tools)
     return p
@@ -116,3 +126,7 @@ def log_main():
 
 def import_main():
     return main(["importdoctor", *sys.argv[1:]])
+
+
+def asset_main():
+    return main(["assetguard", *sys.argv[1:]])

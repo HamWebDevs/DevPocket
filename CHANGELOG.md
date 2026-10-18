@@ -2,6 +2,16 @@
 
 User-visible changes are recorded here. Repository versions are not PyPI releases.
 
+## 0.5.0 — 2026-10-18
+
+- Add AssetGuard: bundler-independent production-artifact inventories, deterministic gzip estimates and per-kind size summaries.
+- Resolve explicit HTML resource references against document/base URLs and deployment prefixes; locate missing resources without executing target code or fetching URLs.
+- Detect duplicate content, source maps and private deployment entries; never read secret-like file contents.
+- Compare validated content-hash snapshots, including byte-identical renames, unique new content and total/asset/growth budgets. Missing measurements cannot pass requested budgets.
+- Add the standalone `assetguard` command, read-only structured/SARIF/MCP integration and a working three-file build/CI example.
+- Keep SDK API v1 unchanged and update the scaffold/reference-plugin dependency range for DevPocket 0.4/0.5 compatibility.
+- Bound traversal, inputs and reports; refuse symlinks and observed build mutations. Keep the build auditor uncached so deployment metadata is inspected on every run.
+
 ## 0.4.0 — 2026-10-18
 
 - Add verified GitHub release builds with wheels, source distributions, versioned tags and SHA-256 checksums.

@@ -37,6 +37,7 @@ Use the command/arguments in your client's local MCP server configuration. Some 
 
 | MCP name | Capability |
 | --- | --- |
+| `assetguard` | Offline production-build inventories, explicit resource checks and size budgets under the project root. |
 | `reporadar` | Read-only offline repository findings. |
 | `envtwin` | Reporting-interpreter snapshot or comparison of root-contained snapshot files. |
 | `importdoctor` | Static import diagnosis using the selected root and interpreter metadata. |

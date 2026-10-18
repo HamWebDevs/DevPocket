@@ -13,6 +13,7 @@ DevPocket is a Python 3.10+ CLI package with no runtime dependencies.
 - Update the relevant guide and CHANGELOG for user-visible changes. Keep version values in `pyproject.toml` and `devpocket/__init__.py` aligned.
 - Do not add telemetry, automatic uploads, required external services or runtime dependencies without an explicit request.
 - Keep code and fixtures free of real credentials or private logs.
+- AssetGuard inspects only finished artifacts. Preserve private-file metadata-only handling, mutation/symlink refusal and honest gzip/coverage limits; never fetch resource URLs or execute target HTML/JavaScript.
 
 ## Extension platform (0.3+)
 

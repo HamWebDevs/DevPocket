@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "checks": {
+    "sample-production-build": {
+      "tool": "assetguard",
+      "input": {
+        "path": "examples/web-dist",
+        "max_total_gzip_kib": 16,
+        "max_asset_gzip_kib": 8
+      }
+    }
+  }
+}

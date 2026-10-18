@@ -247,7 +247,7 @@ class MCPTests(TempTest):
         server.handle({'jsonrpc': '2.0', 'id': 2, 'method': 'tools/list'})
         server.executor.shutdown()
         tools = json.loads(output.getvalue().splitlines()[-1])['result']['tools']
-        self.assertEqual({t['name'] for t in tools}, {'reporadar', 'envtwin', 'loglens', 'importdoctor'})
+        self.assertEqual({t['name'] for t in tools}, {'assetguard', 'reporadar', 'envtwin', 'loglens', 'importdoctor'})
 
     def test_preinitialization_and_unknown_tool_are_protocol_errors(self):
         output = io.StringIO()
