@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "plugins": [],
+  "checks": {
+    "repository": {
+      "tool": "reporadar",
+      "input": {}
+    },
+    "python-imports": {
+      "tool": "importdoctor",
+      "input": {"module": "json"}
+    }
+  }
+}

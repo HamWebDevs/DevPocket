@@ -15,9 +15,18 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
+      - run: python -m pip install --upgrade setuptools wheel
       - run: python -m pip install .
       - run: python -m unittest discover -s tests -v
       - run: devpocket --help
       - run: loglens examples/events.log --json
       - run: importdoctor json --json
       - run: python -m devpocket reporadar --root .
+      - run: devpocket check --format json
+      - run: python examples/verify_extension.py --no-build-isolation
+        if: matrix.python == '3.12'
+      - run: devpocket check --format sarif --output checks.sarif
+      - uses: actions/upload-artifact@v4
+        with:
+          name: diagnostics-${{ runner.os }}-${{ matrix.python }}
+          path: checks.sarif

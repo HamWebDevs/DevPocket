@@ -1,12 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1280" height="320" viewBox="0 0 1280 320" role="img" aria-labelledby="title desc">
   <title id="title">DevPocket</title>
-  <desc id="desc">Small tools. Fewer rabbit holes. Seven local developer utilities, built with Python.</desc>
+  <desc id="desc">Your tools. One developer toolkit. Local diagnostics, plugins, parallel checks and MCP, built with Python.</desc>
   <rect width="1280" height="320" rx="20" fill="#101b2c"/>
   <path d="M950 0h330v320H1100z" fill="#14263a"/>
   <path d="M1150 0h130v320z" fill="#17334a"/>
   <rect x="64" y="80" width="148" height="148" rx="30" fill="#82edc4"/>
   <path d="m99 124 27 24-27 24m46 0h32" fill="none" stroke="#101b2c" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
   <text x="252" y="144" fill="#f2f7ff" font-family="ui-sans-serif,system-ui,sans-serif" font-size="76" font-weight="750" letter-spacing="-3">DevPocket</text>
-  <text x="256" y="194" fill="#c3d0e1" font-family="ui-sans-serif,system-ui,sans-serif" font-size="27">Small tools. Fewer rabbit holes.</text>
-  <text x="256" y="245" fill="#82edc4" font-family="ui-monospace,monospace" font-size="17">7 CLI tools / Python 3.10+ / no runtime dependencies</text>
+  <text x="256" y="194" fill="#c3d0e1" font-family="ui-sans-serif,system-ui,sans-serif" font-size="27">Your tools. One developer toolkit.</text>
+  <text x="256" y="245" fill="#82edc4" font-family="ui-monospace,monospace" font-size="17">PLUGINS / PROJECT CHECKS / SARIF / MCP</text>
 </svg>

@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "devpocket-toolkit"
-version = "0.2.0"
-description = "Seven small tools for the frustrating parts of programming."
+version = "0.3.0"
+description = "Extensible local developer diagnostics: plugins, parallel checks, SARIF and MCP."
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
@@ -14,10 +14,10 @@ dependencies = []
 classifiers = ["Programming Language :: Python :: 3", "Environment :: Console", "Operating System :: OS Independent"]
 
 [project.urls]
-Homepage = "https://github.com/instalsxx/DevPocket"
-Repository = "https://github.com/instalsxx/DevPocket"
-Issues = "https://github.com/instalsxx/DevPocket/issues"
-Changelog = "https://github.com/instalsxx/DevPocket/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/HamWebDevs/DevPocket"
+Repository = "https://github.com/HamWebDevs/DevPocket"
+Issues = "https://github.com/HamWebDevs/DevPocket/issues"
+Changelog = "https://github.com/HamWebDevs/DevPocket/blob/main/CHANGELOG.md"
 
 [project.scripts]
 devpocket = "devpocket.cli:main"

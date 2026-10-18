@@ -16,3 +16,9 @@ Suggestions, bug reports and small fixes are welcome. Include the operating syst
 ## Package layout
 
 Each tool lives in `devpocket/TOOL.py`, with CLI flags and standalone aliases in `devpocket/cli.py`. Packaging entry points are in `pyproject.toml`; tests live in `tests/`; detailed guides and the repository banner live in `docs/`. Keep Python 3.10 compatibility and avoid runtime dependencies.
+
+## Extending without changing the core
+
+Prefer a plugin when your tool is domain-specific or needs external dependencies. Start with `devpocket plugins scaffold ./my-check --name my-check` and read [the SDK guide](docs/plugins.md). No core fork is required. Proposals for core additions should explain why the tool belongs in the dependency-free host.
+
+Platform changes should cover process boundaries, timeout/cancellation, disabled plugin behaviour, schema errors and report compatibility. Run `python examples/verify_extension.py` for packaging/integration coverage. Keep public API/report/config versions explicit and document compatibility changes.

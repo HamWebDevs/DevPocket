@@ -13,3 +13,13 @@ DevPocket is a Python 3.10+ CLI package with no runtime dependencies.
 - Update the relevant guide and CHANGELOG for user-visible changes. Keep version values in `pyproject.toml` and `devpocket/__init__.py` aligned.
 - Do not add telemetry, automatic uploads, required external services or runtime dependencies without an explicit request.
 - Keep code and fixtures free of real credentials or private logs.
+
+## Extension platform (0.3+)
+
+- The public extension contract is `devpocket/sdk.py` API v1. Validate schemas before executing plugin runners.
+- Discover plugins through entry-point metadata only. Do not import disabled plugins or let plugins shadow built-ins.
+- CLI/check invocations use `checks.invoke` workers. Preserve bounds, timeout/cancellation cleanup, structured JSON envelopes and secret redaction.
+- MCP must retain clean protocol-only stdout, explicit initialization, read-only defaults and explicit plugin exposure. Never add shell execution to its default tools.
+- Fingerprints and baselines must not suppress tool execution failures.
+- Verify extension changes with `python examples/verify_extension.py`; it builds real wheels and installs into a temporary environment. This may install build dependencies from the configured registry. With setuptools/wheel already available, use `--no-build-isolation`.
+- The `examples/plugins/long-lines` package is generated from the scaffold and should stay aligned with it.

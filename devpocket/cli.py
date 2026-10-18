@@ -13,7 +13,7 @@ def command_options(parser):
 
 
 def parser():
-    p = argparse.ArgumentParser(prog="devpocket", description="Seven tools for the frustrating parts of programming.")
+    p = argparse.ArgumentParser(prog="devpocket", description="Extensible local developer diagnostics, project checks and MCP tools.")
     p.add_argument("--version", action="version", version=__version__)
     tools = p.add_subparsers(dest="tool", required=True)
     o = tools.add_parser("oopsfile", help="Capture a failed command as a Markdown debugging report")
@@ -67,6 +67,8 @@ def parser():
     i.add_argument("--expect-python", help="Expected interpreter executable path, for comparison only")
     i.add_argument("--json", action="store_true")
     i.set_defaults(handler=importdoctor.execute)
+    from .platform_cli import register
+    register(tools)
     return p
 
 

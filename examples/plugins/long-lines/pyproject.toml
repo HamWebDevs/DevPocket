@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "devpocket-tool-long-lines"
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = ["devpocket-toolkit>=0.3,<0.4"]
+
+[project.entry-points."devpocket.tools"]
+long-lines = "devpocket_plugin_long_lines:build_tool"
+
+[tool.setuptools.packages.find]
+include = ["devpocket_plugin_long_lines*"]

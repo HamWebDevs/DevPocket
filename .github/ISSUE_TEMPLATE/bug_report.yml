@@ -9,7 +9,7 @@ body:
     id: tool
     attributes:
       label: Affected tool
-      options: [Oopsfile, EnvTwin, UndoRun, FlakeTrail, RepoRadar, LogLens, ImportDoctor, Installation or CLI]
+      options: [Oopsfile, EnvTwin, UndoRun, FlakeTrail, RepoRadar, LogLens, ImportDoctor, Plugin SDK, Project checks or reports, MCP server, Installation or CLI]
     validations:
       required: true
   - type: textarea

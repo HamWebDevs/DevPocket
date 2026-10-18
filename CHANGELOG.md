@@ -2,6 +2,29 @@
 
 User-visible changes are recorded here. Repository versions are not PyPI releases.
 
+## 0.3.0 — 2026-10-18
+
+### Added
+
+- Public API v1 plugin SDK: typed tool context/spec/result/finding contracts, strict schema subset and stable finding fingerprints.
+- Metadata-only plugin discovery, project-specific enable/disable, collision detection, complete scaffolding and a packaged reference plugin.
+- A structured runner for all seven built-ins and installed plugins, with isolated workers, bounded diagnostics, timeouts and explicit execution opt-in.
+- JSON project configuration and dependency-aware parallel checks, severity gates, allowed failures and baseline suppression of existing findings.
+- Shared text, JSON, Markdown and SARIF 2.1.0 reports.
+- Local stdio MCP server with read-only built-in diagnostics, explicit plugin exposure, structured tool results, bounded concurrency and cancellation.
+- Real-wheel extension verification across installation, discovery, CLI, checks, baselines, SARIF and MCP.
+- Extension, project-check and integration guides; repository self-check configuration.
+
+### Fixed
+
+- Bounded credential-key matching avoids excessive backtracking on very long unbroken output.
+- POSIX worker termination can unwind built-in nested command runners before hard termination. Windows descendant-cleanup limits remain documented.
+
+### Compatibility
+
+- Original seven tool commands keep their interfaces and exit conventions.
+- Plugin API v1 and JSON report/config schema 1 are new in this pre-1.0 release. Scaffolded plugins declare a compatible 0.3 host range.
+
 ## 0.2.0 — 2026-10-18
 
 ### Added

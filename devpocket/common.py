@@ -30,7 +30,9 @@ def redact(text: str) -> str:
     text = re.sub(r"(?i)(https?://)[^\s/@:]+:[^\s/@]+@", r"\1[REDACTED]@", text)
     text = re.sub(r"(?i)(bearer\s+)[A-Za-z0-9._~+/=-]+", r"\1[REDACTED]", text)
     text = re.sub(r"\b(?:gh[pousr]_[A-Za-z0-9_]{16,}|github_pat_[A-Za-z0-9_]+|AKIA[A-Z0-9]{16}|sk-[A-Za-z0-9_-]{16,})\b", "[REDACTED]", text)
-    text = re.sub(r'''(?im)((?:[\w-]*(?:password|passwd|secret|token|api[_-]?key)[\w-]*)["']?\s*[:=]\s*)(?:"[^"\n]*"|'[^'\n]*'|[^\s,;]+)''', r"\1[REDACTED]", text)
+    # Anchor a bounded identifier at a token boundary to avoid quadratic scans
+    # on long unbroken log messages without a credential assignment.
+    text = re.sub(r'''(?im)(?<![\w-])((?=[\w-]{0,127}(?:password|passwd|secret|token|api[_-]?key))[\w-]{1,128}["']?\s*[:=]\s*)(?:"[^"\n]*"|'[^'\n]*'|[^\s,;]+)''', r"\1[REDACTED]", text)
     text = re.sub(r"(?i)(--(?:password|secret|token|api-key)\s+)\S+", r"\1[REDACTED]", text)
     home = str(Path.home())
     if len(home) > 1:
@@ -75,14 +77,16 @@ def digest(path: Path) -> str:
     return h.hexdigest()
 
 
-def run(command, *, cwd=None, timeout=60.0):
+def run(command, *, cwd=None, timeout=60.0, input_text=None, env=None, capture_limit=MAX_CAPTURE, cancel_event=None):
     """Execute argv without a shell. Capture each stream's last 128 KiB."""
     if not command:
         raise ValueError("Supply a command after --")
     if not math.isfinite(timeout) or timeout <= 0:
         raise ValueError("Timeout must be positive")
+    if type(capture_limit) is not int or not 1 <= capture_limit <= 8 * 1024 * 1024:
+        raise ValueError("Invalid capture limit")
     start = time.monotonic()
-    proc = subprocess.Popen(command, cwd=cwd, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE, start_new_session=(os.name == "posix"))
+    proc = subprocess.Popen(command, cwd=cwd, stdin=subprocess.PIPE if input_text is not None else subprocess.DEVNULL, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, start_new_session=(os.name == "posix"))
     buffers = [bytearray(), bytearray()]
     totals = [0, 0]
 
@@ -94,22 +98,50 @@ def run(command, *, cwd=None, timeout=60.0):
                     break
                 totals[index] += len(block)
                 buffers[index].extend(block)
-                if len(buffers[index]) > MAX_CAPTURE:
-                    del buffers[index][:-MAX_CAPTURE]
+                if len(buffers[index]) > capture_limit:
+                    del buffers[index][:-capture_limit]
         finally:
             stream.close()
 
     threads = [threading.Thread(target=drain, args=(stream, i), daemon=True) for i, stream in enumerate((proc.stdout, proc.stderr))]
     for thread in threads:
         thread.start()
+    if input_text is not None:
+        def send_input():
+            try:
+                proc.stdin.write(input_text.encode("utf-8"))
+                proc.stdin.flush()
+            except (BrokenPipeError, OSError):
+                pass
+            finally:
+                proc.stdin.close()
+        threading.Thread(target=send_input, daemon=True).start()
     timed_out = False
+    cancelled = False
     try:
-        proc.wait(timeout=timeout)
+        deadline = start + timeout
+        while proc.poll() is None:
+            if cancel_event is not None and cancel_event.is_set():
+                cancelled = True
+                raise subprocess.TimeoutExpired(command, timeout)
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise subprocess.TimeoutExpired(command, timeout)
+            try:
+                proc.wait(timeout=min(.1, remaining))
+            except subprocess.TimeoutExpired:
+                continue
     except subprocess.TimeoutExpired:
-        timed_out = True
+        timed_out = not cancelled
         if os.name == "posix":
             try:
-                os.killpg(proc.pid, signal.SIGKILL)
+                # Workers use SIGTERM to unwind a nested command runner and
+                # terminate its process group before the final hard kill.
+                os.killpg(proc.pid, signal.SIGTERM)
+                try:
+                    proc.wait(timeout=.5)
+                except subprocess.TimeoutExpired:
+                    os.killpg(proc.pid, signal.SIGKILL)
             except ProcessLookupError:
                 pass
         else:
@@ -128,7 +160,7 @@ def run(command, *, cwd=None, timeout=60.0):
     for thread in threads:
         thread.join(timeout=1)
     streams = [bytes(b).decode("utf-8", errors="replace") for b in buffers]
-    return {"returncode": 124 if timed_out else proc.returncode, "timed_out": timed_out, "seconds": round(time.monotonic() - start, 4), "stdout": streams[0], "stderr": streams[1], "truncated": [n > MAX_CAPTURE for n in totals]}
+    return {"returncode": 130 if cancelled else 124 if timed_out else proc.returncode, "timed_out": timed_out, "seconds": round(time.monotonic() - start, 4), "stdout": streams[0], "stderr": streams[1], "truncated": [n > capture_limit for n in totals]}
 
 
 def exit_code(code: int) -> int:
