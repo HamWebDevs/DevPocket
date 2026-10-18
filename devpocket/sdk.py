@@ -76,12 +76,16 @@ class ToolSpec:
     run: Callable[[ToolContext, dict], ToolResult]
     read_only: bool = True
     api_version: int = API_VERSION
+    # Opt in only when all result-affecting file/environment inputs can be declared.
+    cache_version: str | None = None
 
     def __post_init__(self):
         if not NAME.fullmatch(self.name) or not self.description or not callable(self.run):
             raise ValueError("Invalid tool name, description or runner")
         if self.api_version != API_VERSION or type(self.read_only) is not bool:
             raise ValueError("Unsupported plugin API version or invalid read_only declaration")
+        if self.cache_version is not None and (not self.read_only or not isinstance(self.cache_version, str) or not 1 <= len(self.cache_version) <= 64):
+            raise ValueError("cache_version requires a read-only tool and a 1..64 character contract version")
         if self.input_schema.get("type") != "object":
             raise ValueError("Tool input schemas must describe an object")
         validate_schema(self.input_schema)

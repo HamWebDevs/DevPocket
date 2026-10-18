@@ -15,8 +15,8 @@ from .project import validate
 from .reports import apply_baseline
 
 
-def invoke(tool, params, root, plugins=(), allow_exec=False, timeout=60, cancel_event=None):
-    request = json.dumps({"tool": tool, "input": params, "root": str(root), "plugins": list(plugins), "allow_exec": allow_exec}, allow_nan=False)
+def invoke(tool, params, root, plugins=(), allow_exec=False, timeout=60, cancel_event=None, cache_policy=None):
+    request = json.dumps({"tool": tool, "input": params, "root": str(root), "plugins": list(plugins), "allow_exec": allow_exec, "cache": cache_policy}, allow_nan=False)
     if len(request.encode()) > 1024 * 1024:
         return failure(tool, "Tool request exceeds 1 MiB")
     env = os.environ.copy()
@@ -36,7 +36,7 @@ def invoke(tool, params, root, plugins=(), allow_exec=False, timeout=60, cancel_
         return failure(tool, "Worker emitted invalid JSON; plugin output must use the SDK result")
 
 
-def pipeline(config, root, jobs=4, allow_exec=False, fail_on="warning", baseline=None, progress=None):
+def pipeline(config, root, jobs=4, allow_exec=False, fail_on="warning", baseline=None, progress=None, use_cache=True):
     validate(config)
     if not 1 <= jobs <= 8:
         raise ValueError("--jobs must be between 1 and 8")
@@ -69,7 +69,8 @@ def pipeline(config, root, jobs=4, allow_exec=False, fail_on="warning", baseline
                 if progress:
                     progress(name, "running")
                 step = steps[name]
-                future = executor.submit(invoke, step["tool"], step.get("input", {}), root, config.get("plugins", []), allow_exec, step.get("timeout", 60), cancelled)
+                policy = step.get("cache") if use_cache else False if "cache" in step else None
+                future = executor.submit(invoke, step["tool"], step.get("input", {}), root, config.get("plugins", []), allow_exec, step.get("timeout", 60), cancelled, policy)
                 running[future] = name
             if running:
                 done, _ = wait(running, return_when=FIRST_COMPLETED)

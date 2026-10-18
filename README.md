@@ -7,7 +7,7 @@
 
 **An extensible toolkit for local developer diagnostics.**
 
-Seven built-in tools, a versioned plugin SDK, parallel project checks, baseline-aware quality gates and MCP connectivity. Run diagnostics locally, wire them into CI, or let a coding assistant call the same tools — without a hosted service or runtime dependencies.
+Seven built-in tools, a versioned plugin SDK, parallel project checks, opt-in content-addressed caching, baseline-aware quality gates and MCP connectivity. Run diagnostics locally, wire them into CI, or let a coding assistant call the same tools — without a hosted service or runtime dependencies.
 
 [Quick start](#quick-start) · [Build a plugin](#build-and-connect-your-own-tools) · [MCP](docs/mcp.md) · [The toolkit](#the-toolkit) · [Documentation](#documentation) · [Contributing](CONTRIBUTING.md) · [Changelog](CHANGELOG.md)
 
@@ -43,6 +43,19 @@ Independent checks run in parallel worker processes. Define dependencies, timeou
 
 [Project configuration, reports and baselines →](docs/project-checks.md)
 
+## Reuse work when the inputs are unchanged
+
+DevPocket 0.4 can cache deterministic read-only checks. Both the tool and project must opt in. Declare every result-affecting file/directory and environment variable; content, runtime and tool-code fingerprints decide reuse. Cached findings still pass through current baseline, dependency and severity gates.
+
+```bash
+devpocket check --format json
+devpocket cache status --json
+devpocket check --no-cache
+devpocket cache clear
+```
+
+Reports expose hits, misses and bypass reasons. Failed execution, unsafe paths and incomplete snapshots never become cached success. [Configuration, contracts and limits →](docs/cache.md)
+
 ## Build and connect your own tools
 
 ```bash
@@ -55,6 +68,8 @@ devpocket run long-lines --input '{"path":"README.md","max_length":100}'
 The scaffold is a complete Python package with a runner, schema, entry point and test. Plugins are discovered through standard Python package metadata and load only when enabled and used. They work with the same CLI, project checks, reports and optional MCP exposure as the built-in tools.
 
 [Plugin SDK and working reference plugin →](docs/plugins.md)
+
+[ReclaimLab](https://github.com/HamWebDevs/ReclaimLab) is a companion example: its read-only trace and repeated-study plugins work with project checks, result caching, SARIF and MCP.
 
 ## Connect a coding assistant
 
@@ -132,6 +147,7 @@ LogLens groups variable numbers and IDs by default. Use `--exact` when different
 
 - [Plugin SDK, package discovery and reference implementation](docs/plugins.md)
 - [Project checks, structured runs, reports and baselines](docs/project-checks.md)
+- [Deterministic result caching, invalidation and controls](docs/cache.md)
 - [MCP server and client connection](docs/mcp.md)
 - [CLI reference: original five tools, flags and exit codes](docs/cli-reference.md)
 - [LogLens: text, JSONL, compressed logs and grouping](docs/loglens.md)

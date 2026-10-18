@@ -51,7 +51,7 @@ def failure(name, message):
     return {"schema": 1, "version": __version__, "tool": name, "status": "error", "summary": redact(message), "exit_code": 2, "findings": [], "data": {}, "seconds": 0}
 
 
-def execute(name, params, root, enabled=(), allow_exec=False, registry=None):
+def execute(name, params, root, enabled=(), allow_exec=False, registry=None, cache_policy=None):
     started = time.monotonic()
     captured = Capture()
     try:
@@ -60,6 +60,10 @@ def execute(name, params, root, enabled=(), allow_exec=False, registry=None):
             validate_input(params, spec.input_schema)
             if not spec.read_only and not allow_exec:
                 raise ValueError(f"Tool {name} can execute commands or write files; pass --allow-exec explicitly")
+            from .cache import Session
+            session = Session(spec, params, root, cache_policy, allow_exec)
+            if session.hit is not None:
+                return session.finish(session.hit)
             result = spec.run(ToolContext(Path(root).resolve(), allow_exec), params)
         if not isinstance(result, ToolResult) or not isinstance(result.summary, str) or type(result.exit_code) is not int or not 0 <= result.exit_code <= 255:
             raise ValueError("Tool returned an invalid ToolResult")
@@ -73,7 +77,7 @@ def execute(name, params, root, enabled=(), allow_exec=False, registry=None):
         report = clean(report)
         if len(json.dumps(report, allow_nan=False).encode()) > MAX_RESULT:
             raise ValueError("Tool result exceeds 2 MiB; narrow the input or grouping limit")
-        return report
+        return session.finish(report)
     except Exception as exc:
         report = failure(name, f"{type(exc).__name__}: {exc}")
         report["seconds"] = round(time.monotonic() - started, 4)

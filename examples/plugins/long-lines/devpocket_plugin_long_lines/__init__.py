@@ -20,4 +20,5 @@ def build_tool():
         description="Example plugin: find long lines in a selected text file",
         input_schema={"type": "object", "properties": {"path": {"type": "string", "maxLength": 4096}, "max_length": {"type": "integer", "minimum": 1, "maximum": 100000}}, "required": ["path"], "additionalProperties": False},
         run=inspect,
+        cache_version="long-lines-v1",
     )

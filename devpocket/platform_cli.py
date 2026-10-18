@@ -38,6 +38,11 @@ def execute(args):
     if args.tool == "plugins" and args.action == "scaffold":
         print(f"Plugin scaffold created: {scaffold(args.destination, args.name)}")
         return 0
+    if args.tool == "cache":
+        from .cache import manage
+        result = manage(root, clear=args.action == "clear")
+        print(json.dumps(result, indent=2) if args.json else f"Cache: {result['entries']} entries, {result['bytes']} bytes; removed {result['removed']}")
+        return 0
     config = load(root, getattr(args, "config", None))
     registry = Registry(config.get("plugins", []))
     if args.tool in {"tools", "plugins"}:
@@ -61,7 +66,7 @@ def execute(args):
             return 0
         with contextlib.redirect_stdout(Capture()), contextlib.redirect_stderr(Capture()):
             spec = registry.get(args.name)
-        print(json.dumps({"name": spec.name, "description": spec.description, "read_only": spec.read_only, "api_version": spec.api_version, "input_schema": spec.input_schema}, indent=2))
+        print(json.dumps({"name": spec.name, "description": spec.description, "read_only": spec.read_only, "api_version": spec.api_version, "cache_version": spec.cache_version, "input_schema": spec.input_schema}, indent=2))
         return 0
     if args.output and Path(args.output).exists():
         raise ValueError("Output already exists; choose a fresh filename before running checks")
@@ -76,7 +81,7 @@ def execute(args):
         return gated_exit(report, args.fail_on)
     if args.tool == "check":
         callback = (lambda name, state: print(f"[{state}] {name}", file=sys.stderr)) if args.format == "text" else None
-        report = pipeline(config, root, args.jobs, args.allow_exec, args.fail_on, args.baseline, callback)
+        report = pipeline(config, root, args.jobs, args.allow_exec, args.fail_on, args.baseline, callback, not args.no_cache)
         emit(args, report)
         return report["exit_code"]
     raise ValueError("Unknown platform command")
@@ -106,7 +111,15 @@ def register(tools):
     p.set_defaults(handler=execute)
     p = tools.add_parser("check", help="Run configured checks in parallel with dependencies and quality gates")
     p.add_argument("--jobs", type=int, default=4)
+    p.add_argument("--no-cache", action="store_true", help="Run all configured diagnostics without reading or writing result caches")
     output(p)
+    p.set_defaults(handler=execute)
+    p = tools.add_parser("cache", help="Inspect or clear this project's local result cache")
+    actions = p.add_subparsers(dest="action", required=True)
+    for verb in ("status", "clear"):
+        command = actions.add_parser(verb)
+        root(command)
+        command.add_argument("--json", action="store_true")
     p.set_defaults(handler=execute)
     for noun in ("tools", "plugins"):
         p = tools.add_parser(noun, help=f"Discover and manage {noun}")

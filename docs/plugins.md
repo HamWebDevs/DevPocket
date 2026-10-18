@@ -6,7 +6,7 @@ DevPocket discovers installed plugins through the standard Python packaging entr
 
 ## A working plugin in five commands
 
-From a checkout or environment with DevPocket 0.3 installed:
+From a checkout or environment with DevPocket 0.4 installed:
 
 ```bash
 devpocket plugins scaffold ./my-check --name long-lines
@@ -69,18 +69,20 @@ Register that factory in `pyproject.toml`:
 todo-review = "your_package:build_tool"
 ```
 
-The factory is called with no arguments and must return a `ToolSpec` whose name matches the entry point. The supported SDK is **API v1** (`devpocket.sdk.API_VERSION == 1`), introduced in DevPocket 0.3. Unsupported API versions are rejected. Plugins should declare an appropriate host dependency; the scaffold uses `devpocket-toolkit>=0.3,<0.4` while the platform is pre-1.0.
+The factory is called with no arguments and must return a `ToolSpec` whose name matches the entry point. The supported SDK is **API v1** (`devpocket.sdk.API_VERSION == 1`), introduced in DevPocket 0.3. Unsupported API versions are rejected. Older API v1 plugins remain valid on 0.4. Plugins should declare an appropriate host dependency; the new scaffold uses `devpocket-toolkit>=0.4,<0.5` because it demonstrates the optional cache contract.
 
 ### Types and contracts
 
 | Type | Contract |
 | --- | --- |
 | `ToolContext` | `root: Path`, `allow_exec: bool`; `resolve(relative)` refuses paths and symlinks escaping that root. This helper is not a sandbox. |
-| `ToolSpec` | Name, description, input schema, `run(context, input)` callable, `read_only` declaration and `api_version`. Names use lowercase letters, digits and hyphens, start with a letter and have at most 64 characters. |
+| `ToolSpec` | Name, description, input schema, `run(context, input)` callable, `read_only` declaration, `api_version` and optional `cache_version`. Names use lowercase letters, digits and hyphens, start with a letter and have at most 64 characters. |
 | `ToolResult` | Summary string, a list of `Finding` objects, JSON-compatible data and optional nonzero `exit_code` for tool/command failure. Ordinary findings should leave `exit_code=0`; the host applies severity gates. |
 | `Finding` | Stable rule ID, message, `note`/`warning`/`error` severity, optional relative POSIX path, positive line number and help text. Absolute paths and traversal are refused. |
 
 Fingerprints include rule, severity, path and redacted message, deliberately excluding line numbers. Keep messages stable when you want baselines to survive code movement. Put changing counts or evidence in `data` or `help`. Moving a finding to a different file or changing its severity produces a different fingerprint.
+
+`cache_version` defaults to `None`. In 0.4, deterministic read-only tools may set a 1–64 character contract version, such as `cache_version="my-check-v1"`. The project must also declare complete inputs before results are reused. Bump the contract when semantics change. Time-, service- or undeclared-environment-dependent tools should remain uncached. [Caching guide](cache.md).
 
 ### Input schema subset
 

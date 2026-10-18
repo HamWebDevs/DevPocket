@@ -23,3 +23,9 @@ DevPocket is a Python 3.10+ CLI package with no runtime dependencies.
 - Fingerprints and baselines must not suppress tool execution failures.
 - Verify extension changes with `python examples/verify_extension.py`; it builds real wheels and installs into a temporary environment. This may install build dependencies from the configured registry. With setuptools/wheel already available, use `--no-build-isolation`.
 - The `examples/plugins/long-lines` package is generated from the scaffold and should stay aligned with it.
+
+## Result caching (0.4+)
+
+- Caching is opt-in in both ToolSpec and project configuration. Preserve complete input declarations, source/runtime fingerprints, bounded hashing/storage and symlink refusal.
+- Baselines and gates apply to fresh decoded raw reports, including cache hits. Never cache execution failures or allow cached results to bypass failed dependencies.
+- Recheck inputs before storing/reusing a result; cache errors must fall back to real execution. Keep direct runs and MCP calls uncached.

@@ -2,6 +2,8 @@
 
 [Back to DevPocket](../README.md) · [Plugin SDK](plugins.md) · [MCP](mcp.md)
 
+DevPocket 0.4 also accepts an optional per-check `cache` policy. Tools without a cache contract continue to execute normally. See [deterministic caching](cache.md) for complete input declarations, hit/miss evidence, `--no-cache` and cache management commands.
+
 ## Configure once, run locally and in CI
 
 ```bash

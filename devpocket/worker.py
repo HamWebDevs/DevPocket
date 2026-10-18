@@ -16,7 +16,7 @@ def main():
         if len(raw.encode()) > 1024 * 1024:
             raise ValueError("Worker request exceeds 1 MiB")
         data = json.loads(raw)
-        report = execute(data["tool"], data.get("input", {}), data["root"], data.get("plugins", []), data.get("allow_exec", False))
+        report = execute(data["tool"], data.get("input", {}), data["root"], data.get("plugins", []), data.get("allow_exec", False), cache_policy=data.get("cache"))
     except Exception as exc:
         report = failure("worker", f"{type(exc).__name__}: {exc}")
     print(json.dumps(report, allow_nan=False))

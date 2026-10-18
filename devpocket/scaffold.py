@@ -24,7 +24,7 @@ build-backend = "setuptools.build_meta"
 name = "devpocket-tool-{name}"
 version = "0.1.0"
 requires-python = ">=3.10"
-dependencies = ["devpocket-toolkit>=0.3,<0.4"]
+dependencies = ["devpocket-toolkit>=0.4,<0.5"]
 
 [project.entry-points."devpocket.tools"]
 {name} = "{module}:build_tool"
@@ -54,6 +54,7 @@ def build_tool():
         description="Example plugin: find long lines in a selected text file",
         input_schema={{"type": "object", "properties": {{"path": {{"type": "string", "maxLength": 4096}}, "max_length": {{"type": "integer", "minimum": 1, "maximum": 100000}}}}, "required": ["path"], "additionalProperties": False}},
         run=inspect,
+        cache_version="long-lines-v1",
     )
 ''',
         "test_plugin.py": f'''import tempfile
@@ -77,7 +78,7 @@ if __name__ == "__main__":
 
 A complete DevPocket API v1 plugin example. Change the schema, runner and tests to build your own check.
 
-Install DevPocket 0.3 first, then install this plugin in the same Python environment:
+Install DevPocket 0.4 first, then install this plugin in the same Python environment:
 
 ```bash
 python -m pip install .
@@ -92,6 +93,8 @@ devpocket run {name} --input '{{"path":"README.md","max_length":100}}'
 ```
 
 Enabling a plugin explicitly trusts its installed Python code for this project. A read_only declaration is a promise, not a sandbox. No plugin is downloaded or enabled automatically.
+
+This example opts into deterministic result caching with `cache_version="long-lines-v1"`. To cache it in project checks, declare the selected file in `cache.inputs`. Keep the contract version current when changing diagnostic semantics. Caching is off unless the check config requests it.
 ''',
         ".gitignore": "__pycache__/\n*.egg-info/\nbuild/\ndist/\n.venv/\n",
     }

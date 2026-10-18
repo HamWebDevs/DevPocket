@@ -61,7 +61,9 @@ def render(report, format="text"):
         return json.dumps(sarif(report), indent=2, allow_nan=False) + "\n"
     lines = [f"DevPocket: {report['tool']}", report["summary"]]
     for step in report.get("checks", []):
-        lines.append(f"{step['name']}: {step['status']} ({step['report']['summary']})")
+        cached = step['report'].get('cache')
+        annotation = f"; cache {cached['status']}" if cached else ""
+        lines.append(f"{step['name']}: {step['status']} ({step['report']['summary']}{annotation})")
     for finding in report.get("findings", []):
         where = finding.get("path", "") + (":" + str(finding["line"]) if finding.get("line") else "")
         state = " [existing]" if finding.get("existing") else ""

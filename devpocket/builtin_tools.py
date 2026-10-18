@@ -83,7 +83,7 @@ def specs():
         ToolSpec("reporadar", "Offline repository setup and documentation checks", obj(), radar),
         ToolSpec("envtwin", "Snapshot the reporting Python environment or compare saved snapshots", obj({"action": {"type": "string", "enum": ["snapshot", "diff"]}, "left": string(), "right": string()}), environment),
         ToolSpec("importdoctor", "Inspect import resolution without importing target modules", obj({"module": string(), "distribution": string(), "expect_python": string()}, ["module"]), imports),
-        ToolSpec("loglens", "Group recurring events in root-contained text, JSONL and gzip logs", obj({"paths": {"type": "array", "items": string(), "minItems": 1, "maxItems": 64}, "exact": boolean, "all": boolean, "max_groups": {"type": "integer", "minimum": 1, "maximum": 10000}}, ["paths"]), logs),
+        ToolSpec("loglens", "Group recurring events in root-contained text, JSONL and gzip logs", obj({"paths": {"type": "array", "items": string(), "minItems": 1, "maxItems": 64}, "exact": boolean, "all": boolean, "max_groups": {"type": "integer", "minimum": 1, "maximum": 10000}}, ["paths"]), logs, cache_version="loglens-v1"),
     ]
     for name in ("oopsfile", "flaketrail", "undorun"):
         props = dict(common)

@@ -59,10 +59,22 @@ def main():
         report_path.write_text(report)
         command([*cli, 'baseline', '--from', report_path, '--output', baseline], cwd=project)
         command([*cli, 'run', 'long-lines', '--root', project, '--input', payload, '--baseline', baseline], cwd=project)
-        config = {'version': 1, 'plugins': ['long-lines'], 'checks': {'lines': {'tool': 'long-lines', 'input': json.loads(payload)}, 'imports': {'tool': 'importdoctor', 'input': {'module': 'json'}, 'needs': ['lines']}}}
+        config = {'version': 1, 'plugins': ['long-lines'], 'checks': {'lines': {'tool': 'long-lines', 'input': json.loads(payload), 'cache': {'inputs': ['sample.txt']}}, 'imports': {'tool': 'importdoctor', 'input': {'module': 'json'}, 'needs': ['lines']}}}
         (project / '.devpocket.json').write_text(json.dumps(config))
         checks = json.loads(command([*cli, 'check', '--root', project, '--baseline', baseline, '--format', 'json'], cwd=project))
         assert checks['exit_code'] == 0
+        assert checks['checks'][0]['report']['cache']['status'] == 'miss'
+        reused = json.loads(command([*cli, 'check', '--root', project, '--baseline', baseline, '--format', 'json'], cwd=project))
+        assert reused['checks'][0]['report']['cache']['status'] == 'hit'
+        fresh = json.loads(command([*cli, 'check', '--root', project, '--baseline', baseline, '--format', 'json', '--no-cache'], cwd=project))
+        assert fresh['checks'][0]['report']['cache']['status'] == 'bypass'
+        (project / 'sample.txt').write_text('short\n')
+        changed = json.loads(command([*cli, 'check', '--root', project, '--format', 'json'], cwd=project))
+        assert changed['checks'][0]['report']['cache']['status'] == 'miss'
+        assert not changed['checks'][0]['report']['findings']
+        (project / 'sample.txt').write_text('abcdefghij\n')
+        cleared = json.loads(command([*cli, 'cache', 'clear', '--root', project, '--json'], cwd=project))
+        assert cleared['removed'] >= 2
         sarif = json.loads(command([*cli, 'run', 'long-lines', '--root', project, '--input', payload, '--baseline', baseline, '--format', 'sarif'], cwd=project))
         assert sarif['runs'][0]['results'][0]['baselineState'] == 'unchanged'
         messages = [
@@ -77,7 +89,7 @@ def main():
         assert len(replies[3]['result']['structuredContent']['findings']) == 1
         assert not replies[3]['result']['isError']
         command([python, '-m', 'unittest', 'discover', '-v'], cwd=plugin)
-        print('Extension verification passed: real wheels, metadata-only discovery, enable/disable boundary, findings, baseline, dependency checks, SARIF, MCP and generated plugin tests.')
+        print('Extension verification passed: real wheels, metadata-only discovery, enable/disable boundary, findings, baseline, cached checks, content invalidation, fresh runs, SARIF, MCP and generated plugin tests.')
     return 0
 
 if __name__ == '__main__':

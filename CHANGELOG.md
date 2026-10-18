@@ -2,9 +2,14 @@
 
 User-visible changes are recorded here. Repository versions are not PyPI releases.
 
-## Unreleased
+## 0.4.0 — 2026-10-18
 
 - Credit HamWebDevs consistently in the README, licence and package metadata.
+- Opt-in, content-addressed caching for deterministic read-only project checks, with explicit file/directory and environment declarations.
+- Invalidate on content, missing/added/deleted inputs, parameters, runtime/package versions, tool source and cache contract changes; recheck inputs before saving.
+- Bound cache hashing/storage, refuse symlinks, validate cached reports, expire entries and retain fresh severity/baseline/dependency gates.
+- Add `check --no-cache`, `cache status` and `cache clear`; expose hit/miss/bypass evidence in structured and text reports.
+- Add optional `ToolSpec.cache_version` without changing API v1. LogLens and newly scaffolded plugins support the contract; other built-ins remain uncached.
 
 ## 0.3.0 — 2026-10-18
 

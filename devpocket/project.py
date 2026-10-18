@@ -25,7 +25,7 @@ def validate(config):
     if not isinstance(checks, dict) or len(checks) > 100:
         raise ValueError("checks must be an object containing at most 100 checks")
     for name, step in checks.items():
-        if not NAME.fullmatch(name) or not isinstance(step, dict) or set(step) - {"tool", "input", "needs", "timeout", "allow_failure"}:
+        if not NAME.fullmatch(name) or not isinstance(step, dict) or set(step) - {"tool", "input", "needs", "timeout", "allow_failure", "cache"}:
             raise ValueError(f"Invalid check: {name}")
         if not isinstance(step.get("tool"), str) or not NAME.fullmatch(step["tool"]) or not isinstance(step.get("input", {}), dict):
             raise ValueError(f"Invalid tool or input for check {name}")
@@ -36,6 +36,9 @@ def validate(config):
             raise ValueError(f"Check {name}: timeout must be 0..3600 seconds")
         if type(step.get("allow_failure", False)) is not bool:
             raise ValueError("allow_failure must be boolean")
+        if "cache" in step:
+            from .cache import validate_policy
+            validate_policy(step["cache"])
     remaining = set(checks)
     while remaining:
         ready = {n for n in remaining if not set(checks[n].get("needs", [])) & remaining}
