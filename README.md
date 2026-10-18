@@ -153,6 +153,7 @@ LogLens groups variable numbers and IDs by default. Use `--exact` when different
 - [LogLens: text, JSONL, compressed logs and grouping](docs/loglens.md)
 - [ImportDoctor: shadows, namespaces and interpreter mismatches](docs/importdoctor.md)
 - [Changelog](CHANGELOG.md)
+- [Release packaging and publication](docs/releases.md)
 - [Contribution guide](CONTRIBUTING.md)
 
 ## Development

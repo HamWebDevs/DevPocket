@@ -4,6 +4,7 @@ User-visible changes are recorded here. Repository versions are not PyPI release
 
 ## 0.4.0 — 2026-10-18
 
+- Add verified GitHub release builds with wheels, source distributions, versioned tags and SHA-256 checksums.
 - Credit HamWebDevs consistently in the README, licence and package metadata.
 - Opt-in, content-addressed caching for deterministic read-only project checks, with explicit file/directory and environment declarations.
 - Invalidate on content, missing/added/deleted inputs, parameters, runtime/package versions, tool source and cache contract changes; recheck inputs before saving.

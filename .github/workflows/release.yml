@@ -1,0 +1,93 @@
+name: Release
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    tags: ['v*']
+    paths:
+      - '.github/workflows/release.yml'
+      - '.github/scripts/prepare_release.py'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Read and validate release version
+        id: metadata
+        run: python .github/scripts/prepare_release.py --title DevPocket --metadata-only
+      - name: Check existing release and tag
+        id: state
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ steps.metadata.outputs.tag }}
+        shell: bash
+        run: |
+          if existing=$(gh release view "$TAG" --json isDraft --jq '.isDraft' 2>/dev/null); then
+            if [ "$existing" = true ]; then
+              echo 'An existing draft needs review; refusing to overwrite it.'
+              exit 1
+            fi
+            echo 'Published release already exists; leaving it unchanged.'
+            echo 'exists=true' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if git show-ref --verify --quiet "refs/tags/$TAG"; then
+            tagged=$(git rev-parse "refs/tags/$TAG^{commit}")
+            if [ "$tagged" != "$GITHUB_SHA" ]; then
+              echo 'Existing tag points to a different commit; refusing to move it.'
+              exit 1
+            fi
+          fi
+          echo 'exists=false' >> "$GITHUB_OUTPUT"
+      - name: Install build tools
+        if: steps.state.outputs.exists != 'true'
+        run: python -m pip install --upgrade build setuptools wheel
+      - name: Verify package
+        if: steps.state.outputs.exists != 'true'
+        run: python -m unittest discover -s tests -v
+      - name: Verify installed extension contract
+        if: steps.state.outputs.exists != 'true'
+        run: python examples/verify_extension.py --no-build-isolation
+      - name: Build distributions
+        if: steps.state.outputs.exists != 'true'
+        run: python -m build --no-isolation
+      - name: Verify installed wheel outside checkout
+        if: steps.state.outputs.exists != 'true'
+        shell: bash
+        run: |
+          python -m pip install --no-deps dist/*.whl
+          cd "$RUNNER_TEMP"
+          devpocket --version
+          devpocket tools list --json
+      - name: Prepare release notes and checksums
+        if: steps.state.outputs.exists != 'true'
+        run: python .github/scripts/prepare_release.py --title DevPocket
+      - name: Publish GitHub release
+        if: steps.state.outputs.exists != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ steps.metadata.outputs.tag }}
+          TITLE: ${{ steps.metadata.outputs.title }}
+        shell: bash
+        run: |
+          gh release create "$TAG" dist/*.whl dist/*.tar.gz dist/SHA256SUMS \
+            --target "$GITHUB_SHA" --title "$TITLE" \
+            --notes-file dist/RELEASE-NOTES.md --latest
