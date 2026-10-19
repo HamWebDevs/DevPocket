@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    tags: ['v*']
+    tags: ['v*.*.*']
     paths:
       - '.github/workflows/release.yml'
       - '.github/scripts/prepare_release.py'
@@ -75,6 +75,8 @@ jobs:
           python -m pip install --no-deps dist/*.whl
           cd "$RUNNER_TEMP"
           devpocket --version
+          config-validate --root "$GITHUB_WORKSPACE/examples/workspace" --workspace --format json
+          devpocket config schema --kind project
           workspace-plan --root "$GITHUB_WORKSPACE/examples/workspace" --format json
           devpocket workspace check --root "$GITHUB_WORKSPACE/examples/workspace" --format sarif
           devpocket tools list --json
@@ -94,3 +96,30 @@ jobs:
           gh release create "$TAG" dist/*.whl dist/*.tar.gz dist/SHA256SUMS \
             --target "$GITHUB_SHA" --title "$TITLE" \
             --notes-file dist/RELEASE-NOTES.md --latest
+      - name: Advance verified major Action tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ steps.metadata.outputs.tag }}
+        shell: bash
+        run: |
+          major="${TAG%%.*}"
+          release_sha=$(gh release view "$TAG" --json targetCommitish --jq '.targetCommitish')
+          if ! [[ "$release_sha" =~ ^[0-9a-f]{40}$ ]]; then
+            echo 'Published release target is not an exact commit; refusing to move the major tag.'
+            exit 1
+          fi
+          if current=$(gh api "repos/$GH_REPO/git/ref/tags/$major" --jq '.object.sha' 2>/dev/null); then
+            if [ "$current" = "$release_sha" ]; then
+              exit 0
+            fi
+            if ! git merge-base --is-ancestor "$current" "$release_sha"; then
+              echo 'Major tag has an unexpected history; refusing to move it.'
+              exit 1
+            fi
+            gh api --method PATCH "repos/$GH_REPO/git/refs/tags/$major" \
+              -f sha="$release_sha" -F force=false
+          else
+            gh api --method POST "repos/$GH_REPO/git/refs" \
+              -f ref="refs/tags/$major" -f sha="$release_sha"
+          fi
