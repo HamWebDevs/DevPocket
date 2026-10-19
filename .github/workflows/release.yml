@@ -75,6 +75,8 @@ jobs:
           python -m pip install --no-deps dist/*.whl
           cd "$RUNNER_TEMP"
           devpocket --version
+          workspace-plan --root "$GITHUB_WORKSPACE/examples/workspace" --format json
+          devpocket workspace check --root "$GITHUB_WORKSPACE/examples/workspace" --format sarif
           devpocket tools list --json
           assetguard --root "$GITHUB_WORKSPACE/examples/web-dist" --max-total-gzip-kib 16
       - name: Prepare release notes and checksums
