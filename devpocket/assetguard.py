@@ -15,6 +15,7 @@ from urllib.parse import unquote, urljoin, urlsplit
 import zlib
 
 from .common import load_json, redact, sensitive, write_json
+from .assetrefs import css_resources
 
 MAX_FILES = 3000
 MAX_FILE_BYTES = 32 * 1024 * 1024
@@ -147,7 +148,7 @@ def analyse(root, *, baseline=None, public_path="/", max_total_gzip_kib=None, ma
         raise ValueError("Budgets must be finite KiB values between 0 and 1048576")
     if max_growth_kib is not None and baseline is None:
         raise ValueError("A growth budget requires a baseline snapshot")
-    inventory, findings, pages, stamps = [], [], [], {}
+    inventory, findings, pages, stylesheets, stamps = [], [], [], [], {}
     total_bytes, private_directories = 0, 0
 
     def finding(rule, message, severity="warning", path=None, line=None):
@@ -207,6 +208,11 @@ def analyse(root, *, baseline=None, public_path="/", max_total_gzip_kib=None, ma
                     parser.feed(payload.decode("utf-8", errors="replace"))
                     parser.close()
                     pages.append((relative, parser))
+                elif kind(relative) == "style":
+                    parser = css_resources(payload, MAX_REFERENCES)
+                    stylesheets.append((relative, parser))
+                    if parser.unparsed:
+                        finding("css-reference-coverage", "Some CSS tokens or the stylesheet encoding could not be inspected; literal resource coverage is incomplete", "warning", relative)
                 if kind(relative) == "source-map":
                     finding("published-source-map", "Source map is included in the deployment output; review whether publishing it is intended", "note", relative)
             inventory.append(row)
@@ -216,12 +222,13 @@ def analyse(root, *, baseline=None, public_path="/", max_total_gzip_kib=None, ma
     validate_snapshot(snapshot)
     known = {f["path"] for f in inventory}
     local_references, external_references = 0, 0
-    reference_count = sum(len(parser.references) for _, parser in pages)
+    reference_count = sum(len(parser.references) for _, parser in pages + stylesheets)
     if reference_count > MAX_REFERENCES:
-        raise ValueError("Build exceeds 20000 HTML resource references")
-    for page, parser in pages:
+        raise ValueError("Build exceeds 20000 HTML/CSS resource references")
+    for page, parser in pages + stylesheets:
         page_url = ORIGIN + public_path + page
-        base_url = urljoin(page_url, parser.base) if parser.base is not None else page_url
+        base = getattr(parser, 'base', None)
+        base_url = urljoin(page_url, base) if base is not None else page_url
         for reference, line in parser.references:
             try:
                 url = urlsplit(urljoin(base_url, reference))
@@ -233,7 +240,7 @@ def analyse(root, *, baseline=None, public_path="/", max_total_gzip_kib=None, ma
                     raise ValueError("Invalid URL path")
                 normalized = posixpath.normpath(decoded)
             except ValueError:
-                finding("invalid-resource-url", "HTML contains an invalid local resource URL", "error", page, line)
+                finding("invalid-resource-url", "Document contains an invalid local resource URL", "error", page, line)
                 continue
             local_references += 1
             if not normalized.startswith(public_path):
@@ -244,6 +251,7 @@ def analyse(root, *, baseline=None, public_path="/", max_total_gzip_kib=None, ma
                 finding("missing-build-resource", "Referenced resource is absent from the build: " + target[:200], "error", page, line)
     summary = totals(inventory)
     summary.update(local_resource_references=local_references, external_resource_references=external_references, skipped_private_directories=private_directories)
+    summary.update(css_stylesheets=len(stylesheets), css_resource_references=sum(len(p.references) for _, p in stylesheets), css_unparsed_tokens=sum(p.unparsed for _, p in stylesheets), css_fragment_references=sum(p.fragments for _, p in stylesheets))
     duplicates = []
     hashes = defaultdict(list)
     for row in inventory:
@@ -267,7 +275,7 @@ def analyse(root, *, baseline=None, public_path="/", max_total_gzip_kib=None, ma
         finding("gzip-growth-budget", f"Build gzip estimate grew by {delta['gzip_delta_bytes']} bytes, exceeding the {max_growth_kib:g} KiB growth budget", "error")
     if any(path.is_symlink() or checked_stat(path) != value for path, value in stamps.items()):
         raise ValueError("Build changed during inspection; run against a finished build")
-    return {"schema": 1, "tool": "assetguard", "summary": summary, "findings": findings, "duplicates": duplicates, "comparison": delta, "snapshot": snapshot, "interpretation": "Gzip level 9 estimates describe files on disk, not browser transfer or initial-route cost. HTML resource checks cover explicit src/href attributes, not srcset, CSS URLs, JavaScript imports, dynamic routes or remote availability. Identical content is not proof of waste. Source maps may be intentional. No target code is executed."}
+    return {"schema": 1, "tool": "assetguard", "summary": summary, "findings": findings, "duplicates": duplicates, "comparison": delta, "snapshot": snapshot, "interpretation": "Gzip level 9 estimates describe files on disk, not browser transfer or initial-route cost. Resource checks cover explicit HTML src/href and literal url()/@import in UTF-8 CSS files. Inline styles, srcset, image-set string candidates, computed values, JavaScript imports, dynamic routes and remote availability remain outside coverage. CSS conditions are not evaluated. Identical content is not proof of waste. Source maps may be intentional. No target code is executed."}
 
 
 def execute(args):

@@ -24,6 +24,8 @@ Structured `run`, project/workspace checks and preflight use 0 for passing gates
 
 ## Upgrade from 0.x
 
+Version 1.1 extends AssetGuard to literal CSS imports and URLs, including fonts and background images. Existing snapshot/config schemas and SDK API v1 remain unchanged. New CSS coverage counters are additive; missing CSS resources can now produce findings in a build that previously checked only HTML references. Review those findings before updating a baseline.
+
 1. Install the v1 wheel/source in the same environment as reviewed plugins. Nothing is published to PyPI by this repository.
 2. Run `devpocket config validate`; fix invalid built-in parameters, missing/disabled/conflicting plugins and resource-limit violations.
 3. Run the configured checks without cache and review reports, then re-enable declared caching.

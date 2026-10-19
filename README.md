@@ -73,7 +73,7 @@ assetguard --root dist --snapshot artifacts/build-before.json
 assetguard --root dist --baseline artifacts/build-before.json --max-growth-kib 32
 ```
 
-**AssetGuard** measures raw/gzip sizes, catches missing HTML resources and deployment-path mistakes, flags private files and source maps, and finds identical content across renamed chunks. Choose total, individual-asset and growth budgets for CI. It works on finished artifacts from any toolchain and executes no target code. Gzip estimates describe build files; they are not browser transfer or route-performance measurements.
+**AssetGuard** measures raw/gzip sizes, catches missing HTML resources, CSS imports, fonts, background images and deployment-path mistakes, flags private files and source maps, and finds identical content across renamed chunks. Stylesheet references resolve from their own file locations; malformed CSS coverage is reported explicitly. Choose total, individual-asset and growth budgets for CI. It works on finished artifacts from any toolchain and executes no target code. Gzip estimates describe build files; they are not browser transfer or route-performance measurements.
 
 Try `assetguard --root examples/web-dist` from this checkout. [Build comparisons, budgets, SARIF and MCP →](docs/assetguard.md)
 

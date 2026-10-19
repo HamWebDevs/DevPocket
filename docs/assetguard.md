@@ -2,7 +2,7 @@
 
 [Back to DevPocket](../README.md) · [Project checks](project-checks.md) · [Network evidence with ReclaimLab](https://github.com/HamWebDevs/ReclaimLab/blob/main/docs/browser-network.md)
 
-AssetGuard inspects a finished build directory from any toolchain. It measures raw bytes and reproducible gzip level 9 estimates, checks explicit HTML resource references, identifies identical files and records a content-hash snapshot. It never runs a build, executes JavaScript or fetches URLs.
+AssetGuard inspects a finished build directory from any toolchain. It measures raw bytes and reproducible gzip level 9 estimates, checks explicit HTML and literal CSS resource references, identifies identical files and records a content-hash snapshot. It never runs a build, executes JavaScript or fetches URLs.
 
 ## Start with a finished build
 
@@ -83,7 +83,8 @@ Findings carry project-relative locations. Baselines, dependency gates and sever
 
 | Finding | Severity | Interpretation |
 | --- | --- | --- |
-| `missing-build-resource` | Error | An explicit HTML resource is absent from the output inventory. |
+| `missing-build-resource` | Error | An explicit HTML or literal CSS resource is absent from the output inventory. |
+| `css-reference-coverage` | Warning | A stylesheet has malformed/unsupported URL tokens or an unsupported encoding; resource coverage is incomplete. |
 | `resource-outside-public-path` | Error | A local resource URL leaves the configured deployment prefix. |
 | `invalid-resource-url` | Error | A local reference has an invalid URL/path. |
 | `private-build-entry` | Error | A secret-like filename or version-control metadata appears in deployment output. Private file contents are not read. |
@@ -92,8 +93,10 @@ Findings carry project-relative locations. Baselines, dependency gates and sever
 | `duplicate-build-content` | Note | Multiple files are byte-identical; separate copies may be intentional. |
 | `published-source-map` | Note | A source map is present; review whether this deployment should publish it. |
 
-The secret-like filename check is a useful deployment check, not a content-based secrets audit. HTML checks cover explicit resource `src`/`href` attributes, including scripts, styles, preloads and images. They do not resolve `srcset`, CSS URLs, JavaScript imports, dynamic routes, rewrites or remote availability. A generated server directory such as `.next` contains server artifacts too; point AssetGuard at the static output you actually publish.
+The secret-like filename check is a useful deployment check, not a content-based secrets audit. HTML checks cover explicit resource `src`/`href` attributes, including scripts, styles, preloads and images. CSS checks inspect every non-private UTF-8 `.css` file for literal `url()` and string/URL `@import` references, including fonts and background images. Relative URLs resolve from each stylesheet's directory, independently of an HTML base element. CSS escapes, quoted strings, comments, fragments and embedded/remote URLs are handled without fetching anything. Missing local assets report the referring stylesheet and source line. Malformed tokens or unsupported encodings produce `css-reference-coverage` warnings and `css_unparsed_tokens`; this is not a full CSS validator.
 
-Inspection refuses symlinks, non-regular files, unreadable traversal and observed filesystem changes. Limits: 3,000 files, 32 MiB per file, 256 MiB total, 20,000 HTML references and 1,000 findings. Use a finished, stable build; this is not an atomic filesystem snapshot or a sandbox against concurrent hostile writers. Builds with unmeasured private entries cannot produce a comparable size regression result.
+Inline styles, `srcset`, string-only `image-set()` candidates, computed values, JavaScript imports, dynamic routes, rewrites and remote availability are outside coverage. CSS media/support conditions are not evaluated; a reference may belong to an unused branch. A generated server directory such as `.next` contains server artifacts too; point AssetGuard at the static output you actually publish. The scanner follows the literal URL/string and escape rules described in [CSS Syntax Level 3](https://www.w3.org/TR/css-syntax-3/).
+
+Inspection refuses symlinks, non-regular files, unreadable traversal and observed filesystem changes. Limits: 3,000 files, 32 MiB per file, 256 MiB total, 20,000 combined HTML/CSS references and 1,000 findings. Use a finished, stable build; this is not an atomic filesystem snapshot or a sandbox against concurrent hostile writers. Builds with unmeasured private entries cannot produce a comparable size regression result.
 
 Standalone exits: **0** inspection completed with no error findings; **1** deployment/budget errors; **2** invalid input or inspection failure; **130** interrupted. Notes do not fail a standalone run. Structured runs use DevPocket's chosen severity gate.

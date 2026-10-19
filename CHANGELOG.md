@@ -2,6 +2,14 @@
 
 User-visible changes are recorded here. Repository versions are not PyPI releases.
 
+## 1.1.0 — 2026-10-19
+
+- Extend AssetGuard to inspect literal CSS imports, fonts and image URLs in every non-private stylesheet, with stylesheet-relative resolution and deployment-prefix checks.
+- Decode CSS escapes and distinguish comments, strings, fragments, embedded assets and remote references without executing code or making network requests.
+- Report missing CSS resources at the stylesheet and source line. Surface malformed tokens or unsupported encodings as incomplete coverage rather than silently claiming a clean scan.
+- Bound combined HTML/CSS references and preserve metadata-only handling of private files, snapshot schema 1, SDK API v1 and existing budget semantics.
+- Add regression coverage for nested imports, escaped paths, conditional resources, encodings, privacy and reference limits.
+
 ## 1.0.0 — 2026-10-19
 
 - Establish documented 1.x contracts for SDK API v1, configuration/report schemas, CLI gates and the local MCP/Action interfaces, with an explicit 0.x migration guide.
