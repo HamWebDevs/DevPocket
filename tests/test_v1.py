@@ -11,7 +11,7 @@ from unittest import mock
 
 from devpocket import __version__
 from devpocket import checks, configuration, reports
-from devpocket.common import load_json
+from devpocket.common import load_json, redact
 from devpocket.engine import execute
 from devpocket.sdk import Finding
 from test_platform import TempTest
@@ -104,6 +104,11 @@ class ConfigurationTests(TempTest):
 
 
 class AggregationTests(TempTest):
+    def test_missing_home_directory_does_not_break_redaction_or_error_reports(self):
+        with mock.patch.object(Path, 'home', side_effect=RuntimeError('No home in restricted environment')):
+            self.assertEqual(redact('token=PRIVATE_FIXTURE'), 'token=[REDACTED]')
+            self.assertEqual(redact('ordinary diagnostic'), 'ordinary diagnostic')
+
     def test_baseline_is_read_once_and_is_stable_during_execution(self):
         path = self.root / 'accepted.json'
         finding = envelope(True)['findings'][0]
@@ -132,8 +137,9 @@ class AggregationTests(TempTest):
 
     def test_bounded_reads_and_nonfinite_json(self):
         path = self.root / 'data.json'
-        path.write_text('{"value":NaN}')
-        with self.assertRaises(ValueError): load_json(path)
+        for value in ('NaN', '1e9999', '9' * 129, '0.' + '1' * 257):
+            path.write_text('{"value":' + value + '}')
+            with self.assertRaises(ValueError): load_json(path)
         path.write_text(' ' * 20)
         with self.assertRaises(ValueError): load_json(path, max_bytes=16)
         with self.assertRaises(ValueError): load_json(self.root)
@@ -154,8 +160,8 @@ class ActionTests(TempTest):
         self.runner.mkdir()
         self.config = self.checkout / '.devpocket.json'
         self.config.write_text(json.dumps({'version': 1, 'checks': {'env': {'tool': 'envtwin'}}}))
-        self.environ = {'GITHUB_WORKSPACE': str(self.checkout), 'RUNNER_TEMP': str(self.runner), 'GITHUB_OUTPUT': str(self.root / 'outputs'), 'GITHUB_STEP_SUMMARY': str(self.root / 'summary')}
-        patch = mock.patch.dict(os.environ, self.environ, clear=True)
+        self.environ = {'GITHUB_WORKSPACE': str(self.checkout), 'RUNNER_TEMP': str(self.runner), 'GITHUB_OUTPUT': str(self.root / 'outputs'), 'GITHUB_STEP_SUMMARY': str(self.root / 'summary'), 'DEVPOCKET_ROOT': '.', 'DEVPOCKET_CONFIG': '', 'DEVPOCKET_MODE': 'project', 'DEVPOCKET_BASELINE': '', 'DEVPOCKET_FAIL_ON': 'warning', 'DEVPOCKET_ALLOW_EXEC': 'false', 'DEVPOCKET_JOBS': '4', 'DEVPOCKET_REQUIREMENTS': ''}
+        patch = mock.patch.dict(os.environ, self.environ)
         patch.start()
         self.addCleanup(patch.stop)
 

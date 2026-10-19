@@ -34,7 +34,10 @@ def redact(text: str) -> str:
     # on long unbroken log messages without a credential assignment.
     text = re.sub(r'''(?im)(?<![\w-])((?=[\w-]{0,127}(?:password|passwd|secret|token|api[_-]?key))[\w-]{1,128}["']?\s*[:=]\s*)(?:"[^"\n]*"|'[^'\n]*'|[^\s,;]+)''', r"\1[REDACTED]", text)
     text = re.sub(r"(?i)(--(?:password|secret|token|api-key)\s+)\S+", r"\1[REDACTED]", text)
-    home = str(Path.home())
+    try:
+        home = str(Path.home())
+    except RuntimeError:
+        home = ''
     if len(home) > 1:
         text = text.replace(home, "~")
     return text
@@ -52,6 +55,22 @@ def write_json(path: Path, data) -> None:
     write_text(path, json.dumps(data, indent=2, sort_keys=True) + "\n")
 
 
+def decode_json(payload):
+    def invalid(value):
+        raise ValueError('JSON numbers must be finite and bounded')
+    def integer(value):
+        if len(value.lstrip('-')) > 128: return invalid(value)
+        return int(value)
+    def number(value):
+        if len(value) > 256: return invalid(value)
+        result = float(value)
+        return result if math.isfinite(result) else invalid(value)
+    try:
+        return json.loads(payload, parse_constant=invalid, parse_int=integer, parse_float=number)
+    except (RecursionError, UnicodeError) as exc:
+        raise ValueError('Invalid or excessively nested JSON input') from exc
+
+
 def load_json(path: Path, max_bytes=32 * 1024 * 1024):
     path = Path(path)
     if not path.is_file():
@@ -60,12 +79,7 @@ def load_json(path: Path, max_bytes=32 * 1024 * 1024):
         payload = stream.read(max_bytes + 1)
     if len(payload) > max_bytes:
         raise ValueError(f"JSON input exceeds {max_bytes} bytes")
-    def invalid(value):
-        raise ValueError("JSON numbers must be finite")
-    try:
-        return json.loads(payload, parse_constant=invalid)
-    except (RecursionError, UnicodeError) as exc:
-        raise ValueError("Invalid or excessively nested JSON input") from exc
+    return decode_json(payload)
 
 
 def files(root: Path, extra=()):

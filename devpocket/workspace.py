@@ -12,7 +12,7 @@ import time
 
 from . import __version__
 from .checks import invoke
-from .common import write_text
+from .common import decode_json, write_text
 from .engine import clean, failure, gated_exit
 from .project import validate as validate_project
 from .reports import apply_baseline, read_baseline, render
@@ -54,7 +54,7 @@ def read_json(path):
     if len(payload) > MAX_CONFIG:
         raise ValueError("Workspace JSON exceeds 256 KiB")
     try:
-        return json.loads(payload)
+        return decode_json(payload)
     except (ValueError, RecursionError) as exc:
         raise ValueError("Invalid workspace JSON") from exc
 
