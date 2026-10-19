@@ -223,7 +223,7 @@ def check(root, manifest=".devpocket-workspace.json", *, projects=(), changed=No
                 node = nodes[name]
                 step = configs[node["project"]]["checks"][node["check"]]
                 try:
-                    report = relocate(future.result(), node["project"], str(roots[node["project"]].relative_to(Path(root).resolve())))
+                    report = relocate(future.result(), node["project"], roots[node["project"]].relative_to(Path(root).resolve()).as_posix())
                     weight = len(json.dumps(report, allow_nan=False).encode()) + len(json.dumps(report["findings"]).encode())
                     if exhausted or size + weight > MAX_REPORT - 256 * 1024:
                         raise ValueError("Workspace report budget exceeded; select fewer projects")
