@@ -79,6 +79,8 @@ def parser():
     a.set_defaults(handler=assetguard.execute)
     from .platform_cli import register
     register(tools)
+    from .workspace import register as register_workspace
+    register_workspace(tools)
     return p
 
 
@@ -130,3 +132,7 @@ def import_main():
 
 def asset_main():
     return main(["assetguard", *sys.argv[1:]])
+
+
+def workspace_plan_main():
+    return main(["workspace", "plan", *sys.argv[1:]])

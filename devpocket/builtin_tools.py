@@ -94,6 +94,7 @@ def specs():
     command = {"type": "array", "items": {"type": "string", "maxLength": 16384}, "minItems": 1, "maxItems": 256}
     common = {"command": command, "timeout": {"type": "number", "minimum": .01, "maximum": 3600}}
     result = [
+        ToolSpec("workspace-plan", "Inspect a multi-project dependency plan without running checks or importing plugins", obj({"manifest": string(), "projects": {"type": "array", "items": string(), "maxItems": 32}, "changed_files": {"type": "array", "items": string(), "maxItems": 4096}}), workspace_plan),
         ToolSpec("assetguard", "Audit a finished web build for missing resources, exposed files, duplicate content and size budgets", obj({"path": string("Finished build directory, relative to project root"), "public_path": string("Deployment URL prefix, e.g. /docs/"), "baseline": string("Previous AssetGuard snapshot"), **{key: {"type": "number", "minimum": 0, "maximum": 1048576} for key in ("max_total_gzip_kib", "max_asset_gzip_kib", "max_growth_kib")}}), assets),
         ToolSpec("reporadar", "Offline repository setup and documentation checks", obj(), radar),
         ToolSpec("envtwin", "Snapshot the reporting Python environment or compare saved snapshots", obj({"action": {"type": "string", "enum": ["snapshot", "diff"]}, "left": string(), "right": string()}), environment),
@@ -114,3 +115,9 @@ def specs():
             props["exclude"] = {"type": "array", "items": string(), "maxItems": 100}
         result.append(ToolSpec(name, f"Run the {name} command (explicit execution opt-in required)", obj(props, required), lambda ctx, data, tool=name: command_tool(tool, ctx, data), read_only=False))
     return {tool.name: tool for tool in result}
+
+
+def workspace_plan(ctx, params):
+    from .workspace import compile_plan
+    plan = compile_plan(ctx.root, params.get("manifest", ".devpocket-workspace.json"), params.get("projects", []), params.get("changed_files"))[0]
+    return ToolResult(f"{len(plan['nodes'])} planned checks; {plan['scope']} workspace scope", data=plan)

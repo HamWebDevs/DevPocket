@@ -23,6 +23,8 @@ jobs:
       - run: importdoctor json --json
       - run: assetguard --root examples/web-dist --max-total-gzip-kib 16
       - run: devpocket check --config examples/web-checks.json --format json
+      - run: workspace-plan --root examples/workspace --format json
+      - run: devpocket workspace check --root examples/workspace --format sarif --output workspace.sarif
       - run: python -m devpocket reporadar --root .
       - run: devpocket check --format json
       - run: python examples/verify_extension.py --no-build-isolation
@@ -31,4 +33,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: diagnostics-${{ runner.os }}-${{ matrix.python }}
-          path: checks.sarif
+          path: |
+            checks.sarif
+            workspace.sarif

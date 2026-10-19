@@ -37,6 +37,7 @@ Use the command/arguments in your client's local MCP server configuration. Some 
 
 | MCP name | Capability |
 | --- | --- |
+| `workspace-plan` | Dependency and affected-project plans without executing checks or loading plugins. See [workspaces](workspaces.md). |
 | `assetguard` | Offline production-build inventories, explicit resource checks and size budgets under the project root. |
 | `reporadar` | Read-only offline repository findings. |
 | `envtwin` | Reporting-interpreter snapshot or comparison of root-contained snapshot files. |

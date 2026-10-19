@@ -50,8 +50,14 @@ def sarif(report):
             result["locations"] = [{"physicalLocation": location}]
         if "existing" in f:
             result["baselineState"] = "unchanged" if f["existing"] else "new"
+        if f.get("project"):
+            result["properties"] = {key: f[key] for key in ("project", "check") if key in f}
         results.append(result)
-    return {"$schema": "https://json.schemastore.org/sarif-2.1.0.json", "version": "2.1.0", "runs": [{"tool": {"driver": {"name": "DevPocket", "version": report["version"], "informationUri": "https://github.com/HamWebDevs/DevPocket", "rules": list(rules.values())}}, "results": results, "invocations": [{"executionSuccessful": report.get("status") != "error" and all(s["report"].get("status") != "error" for s in report.get("checks", []))}]}]}
+    invocation = {"executionSuccessful": report.get("status") != "error" and all(s["report"].get("status") != "error" for s in report.get("checks", []))}
+    if report.get("tool") in {"workspace", "workspace-plan"}:
+        plan = report.get("data", {})
+        invocation["properties"] = {"workspaceScope": plan.get("scope"), "planSha256": plan.get("plan_sha256"), "selectedProjects": [p["name"] for p in plan.get("projects", []) if p["selected"]], "unselectedProjects": [p["name"] for p in plan.get("projects", []) if not p["selected"]]}
+    return {"$schema": "https://json.schemastore.org/sarif-2.1.0.json", "version": "2.1.0", "runs": [{"tool": {"driver": {"name": "DevPocket", "version": report["version"], "informationUri": "https://github.com/HamWebDevs/DevPocket", "rules": list(rules.values())}}, "results": results, "invocations": [invocation]}]}
 
 
 def render(report, format="text"):

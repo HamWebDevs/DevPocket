@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "shared_inputs": ["tooling"],
+  "projects": {
+    "library": {"path": "packages/lib"},
+    "web": {"path": "apps/web", "needs": ["library"]},
+    "api": {"path": "apps/api"}
+  }
+}

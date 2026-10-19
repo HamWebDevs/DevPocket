@@ -1,0 +1,1 @@
+{"version": 1, "checks": {"imports": {"tool": "importdoctor", "input": {"module": "http.client"}}}}

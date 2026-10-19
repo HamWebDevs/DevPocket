@@ -7,7 +7,7 @@
 
 **An extensible toolkit for local developer diagnostics.**
 
-Eight built-in tools, production-build audits, a versioned plugin SDK, parallel project checks, opt-in content-addressed caching, baseline-aware quality gates and MCP connectivity. Run diagnostics locally, wire them into CI, or let a coding assistant call the same tools — without a hosted service or runtime dependencies.
+Nine built-in SDK tools, production-build audits, dependency-aware workspace checks, a versioned plugin SDK, opt-in content-addressed caching, baseline-aware quality gates and MCP connectivity. Run diagnostics locally, wire them into CI, or let a coding assistant call the same tools — without a hosted service or runtime dependencies.
 
 [Quick start](#quick-start) · [Build a plugin](#build-and-connect-your-own-tools) · [MCP](docs/mcp.md) · [The toolkit](#the-toolkit) · [Documentation](#documentation) · [Contributing](CONTRIBUTING.md) · [Changelog](CHANGELOG.md)
 
@@ -29,7 +29,17 @@ python -m devpocket loglens examples/events.log
 python -m devpocket importdoctor json
 ```
 
-Requires **Python 3.10+**. After cloning, `python -m pip install .` adds the `devpocket` command and all eight standalone aliases. Versioned wheels are also available in [GitHub releases](https://github.com/HamWebDevs/DevPocket/releases). This project is not published to PyPI.
+Requires **Python 3.10+**. After cloning, `python -m pip install .` adds `devpocket` and nine standalone aliases, including `workspace-plan`. Versioned wheels are also available in [GitHub releases](https://github.com/HamWebDevs/DevPocket/releases). This project is not published to PyPI.
+
+## Coordinate a whole workspace
+
+```bash
+devpocket workspace plan --root examples/workspace --format json
+devpocket workspace check --root examples/workspace --jobs 4
+devpocket workspace check --root examples/workspace --changed-file packages/lib/api.py --format sarif
+```
+
+Plan project/check dependencies before running them. Keep each project's plugins and caches scoped to its root, select changed projects and affected dependents, then collect one report with workspace-relative findings. Review a plan digest before execution or expose read-only planning to your coding assistant. Unselected projects remain explicit in SARIF. [Workspace configuration, selection and limits →](docs/workspaces.md)
 
 ## Inspect the build you will deploy
 
@@ -97,6 +107,7 @@ Configure a compatible MCP client to launch the local stdio server. It exposes r
 
 | Command | Use it when… | Guide |
 | --- | --- | --- |
+| **`workspace-plan`** | Several project roots share prerequisites and you need a reviewable dependency plan. Execute it with `devpocket workspace check`. | [Workspace checks](docs/workspaces.md) |
 | **`assetguard`** | You need to review production assets, resource links and build-size regressions before deployment. | [Build auditing](docs/assetguard.md) |
 | `oopsfile` | A command fails and you need a focused debugging report. | [Error reports](docs/cli-reference.md#oopsfile--useful-error-reports-in-one-command) |
 | `envtwin` | Something works on one machine but not another. | [Environment comparisons](docs/cli-reference.md#envtwin--compare-what-actually-differs) |
@@ -106,7 +117,7 @@ Configure a compatible MCP client to launch the local stdio server. It exposes r
 | **`loglens`** | Thousands of log lines hide a few recurring errors. | [Log analysis](docs/loglens.md) |
 | **`importdoctor`** | Python imports the wrong thing — or cannot find it at all. | [Import diagnostics](docs/importdoctor.md) |
 
-Use either `devpocket TOOL ...` or the standalone `TOOL ...` after installation.
+Use either `devpocket TOOL ...` or the standalone `TOOL ...` for the original utilities. `workspace-plan` aliases `devpocket workspace plan`; run plans with `devpocket workspace check`.
 
 ## A few useful commands
 
@@ -158,6 +169,7 @@ LogLens groups variable numbers and IDs by default. Use `--exact` when different
 
 ## Documentation
 
+- [Workspace plans, affected projects and combined reports](docs/workspaces.md)
 - [Plugin SDK, package discovery and reference implementation](docs/plugins.md)
 - [AssetGuard: production builds, content snapshots and size budgets](docs/assetguard.md)
 - [Project checks, structured runs, reports and baselines](docs/project-checks.md)

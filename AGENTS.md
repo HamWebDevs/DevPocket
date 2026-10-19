@@ -30,3 +30,10 @@ DevPocket is a Python 3.10+ CLI package with no runtime dependencies.
 - Caching is opt-in in both ToolSpec and project configuration. Preserve complete input declarations, source/runtime fingerprints, bounded hashing/storage and symlink refusal.
 - Baselines and gates apply to fresh decoded raw reports, including cache hits. Never cache execution failures or allow cached results to bypass failed dependencies.
 - Recheck inputs before storing/reusing a result; cache errors must fall back to real execution. Keep direct runs and MCP calls uncached.
+
+## Workspaces (0.6+)
+
+- Planning must not execute checks or import plugins. Keep input values out of public plans and identify selected/unselected scope in reports.
+- Use one globally bounded worker pool with each project's own root/plugins/cache configuration. Expand affected dependents and prerequisites; unmapped/shared/config changes select all.
+- Relocate copies of findings and namespace fingerprints by project before baseline/dependency gates. Never rewrite raw cached reports.
+- Keep strict path/config/aggregate-report bounds and cleanup on interruption or resource exhaustion. A plan digest binds configuration/selection, not filesystem contents or plugin identity.

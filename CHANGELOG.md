@@ -2,6 +2,16 @@
 
 User-visible changes are recorded here. Repository versions are not PyPI releases.
 
+## 0.6.0 — 2026-10-19
+
+- Add reviewable multi-project workspace plans and dependency-aware execution using one globally bounded pool of isolated check workers.
+- Select explicit projects or changed-file owners, affected dependents and prerequisites; configuration/shared/unmapped changes conservatively select every project.
+- Preserve project-local roots, enabled plugins, timeout/cache declarations, allowed failures and current baseline/severity gates.
+- Namespace findings by project, relocate locations to the workspace root and combine JSON, text, Markdown and SARIF reports with explicit selected/unselected scope.
+- Add expected-plan digest preflight, a read-only `workspace-plan` SDK/MCP tool and standalone alias; planning never imports plugins or runs target checks.
+- Bound project/check/config/selection/report sizes and cancel active work on aggregate resource exhaustion. Plan hashes bind configuration/selection only, not source contents or plugin authenticity.
+- Add a complete three-project example, cross-platform workspace CI checks and developer documentation. Keep SDK API v1 unchanged and verify scaffold compatibility through host 0.6.
+
 ## 0.5.0 — 2026-10-18
 
 - Add AssetGuard: bundler-independent production-artifact inventories, deterministic gzip estimates and per-kind size summaries.
