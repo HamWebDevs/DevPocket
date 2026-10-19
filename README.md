@@ -7,9 +7,33 @@
 
 **An extensible toolkit for local developer diagnostics.**
 
-Nine built-in SDK tools, production-build audits, dependency-aware workspace checks, a versioned plugin SDK, opt-in content-addressed caching, baseline-aware quality gates and MCP connectivity. Run diagnostics locally, wire them into CI, or let a coding assistant call the same tools — without a hosted service or runtime dependencies.
+**Version 1:** installable CLI, stable SDK API v1, configuration/editor contracts and a reusable GitHub Action. [Compatibility and upgrading](docs/compatibility.md) · [CI integration](docs/github-action.md)
+
+Ten built-in SDK tools, production-build audits, dependency-aware workspace checks, a versioned plugin SDK, opt-in content-addressed caching, baseline-aware quality gates and MCP connectivity. Run diagnostics locally, wire them into CI, or let a coding assistant call the same tools — without a hosted service or runtime dependencies.
 
 [Quick start](#quick-start) · [Build a plugin](#build-and-connect-your-own-tools) · [MCP](docs/mcp.md) · [The toolkit](#the-toolkit) · [Documentation](#documentation) · [Contributing](CONTRIBUTING.md) · [Changelog](CHANGELOG.md)
+
+## Put the same checks in CI
+
+```yaml
+- uses: HamWebDevs/DevPocket@v1
+  id: diagnostics
+  with:
+    mode: workspace
+    root: .
+```
+
+After checkout and your normal build, run reviewed project/workspace checks in an isolated Python environment. Collect JSON/SARIF artifacts, new-finding annotations and a job summary; a failed gate still fails the workflow. Optional plugin requirements connect your own diagnostics and ReclaimLab evidence. [Complete workflow, inputs and outputs →](docs/github-action.md)
+
+Validate configuration before running it, without importing plugins or executing checks:
+
+```bash
+devpocket config validate --format json
+devpocket config validate --root examples/workspace --workspace
+devpocket config schema --kind project
+```
+
+Editor schemas ship with the package. Runtime preflight additionally checks dependencies, tool availability and built-in inputs; plugin inputs remain explicitly deferred to workers. [Configuration contracts and limits →](docs/configuration.md)
 
 ## Quick start
 
@@ -29,7 +53,7 @@ python -m devpocket loglens examples/events.log
 python -m devpocket importdoctor json
 ```
 
-Requires **Python 3.10+**. After cloning, `python -m pip install .` adds `devpocket` and nine standalone aliases, including `workspace-plan`. Versioned wheels are also available in [GitHub releases](https://github.com/HamWebDevs/DevPocket/releases). This project is not published to PyPI.
+Requires **Python 3.10+**. After cloning, `python -m pip install .` adds `devpocket` and ten standalone aliases, including `workspace-plan`. Versioned wheels are also available in [GitHub releases](https://github.com/HamWebDevs/DevPocket/releases). This project is not published to PyPI.
 
 ## Coordinate a whole workspace
 
@@ -107,6 +131,7 @@ Configure a compatible MCP client to launch the local stdio server. It exposes r
 
 | Command | Use it when… | Guide |
 | --- | --- | --- |
+| **`config-validate`** | You want a configuration preflight with no check execution or plugin imports. | [Configuration contracts](docs/configuration.md) |
 | **`workspace-plan`** | Several project roots share prerequisites and you need a reviewable dependency plan. Execute it with `devpocket workspace check`. | [Workspace checks](docs/workspaces.md) |
 | **`assetguard`** | You need to review production assets, resource links and build-size regressions before deployment. | [Build auditing](docs/assetguard.md) |
 | `oopsfile` | A command fails and you need a focused debugging report. | [Error reports](docs/cli-reference.md#oopsfile--useful-error-reports-in-one-command) |
@@ -170,6 +195,9 @@ LogLens groups variable numbers and IDs by default. Use `--exact` when different
 ## Documentation
 
 - [Workspace plans, affected projects and combined reports](docs/workspaces.md)
+- [GitHub Action: isolated checks, annotations, summaries and artifacts](docs/github-action.md)
+- [Configuration preflight and editor schemas](docs/configuration.md)
+- [Version 1 contracts, compatibility and migration](docs/compatibility.md)
 - [Plugin SDK, package discovery and reference implementation](docs/plugins.md)
 - [AssetGuard: production builds, content snapshots and size budgets](docs/assetguard.md)
 - [Project checks, structured runs, reports and baselines](docs/project-checks.md)

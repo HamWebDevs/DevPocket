@@ -8,7 +8,7 @@ import tempfile
 from .common import load_json, write_json
 from .sdk import NAME
 
-DEFAULT = {"version": 1, "plugins": [], "checks": {"repository": {"tool": "reporadar", "input": {}}}}
+DEFAULT = {"$schema": "https://raw.githubusercontent.com/HamWebDevs/DevPocket/v1/devpocket/schemas/project-v1.json", "version": 1, "plugins": [], "checks": {"repository": {"tool": "reporadar", "input": {}}}}
 
 
 def config_path(root, path=None):
@@ -16,8 +16,10 @@ def config_path(root, path=None):
 
 
 def validate(config):
-    if not isinstance(config, dict) or (type(config.get("version")) is not int or config.get("version") != 1) or set(config) - {"version", "plugins", "checks"}:
+    if not isinstance(config, dict) or (type(config.get("version")) is not int or config.get("version") != 1) or set(config) - {"$schema", "version", "plugins", "checks"}:
         raise ValueError("Expected .devpocket.json version 1 with plugins and checks")
+    if "$schema" in config and (not isinstance(config["$schema"], str) or not 1 <= len(config["$schema"]) <= 4096):
+        raise ValueError("$schema must be a schema URL string; it is never fetched")
     plugins = config.get("plugins", [])
     if not isinstance(plugins, list) or any(not isinstance(p, str) or not NAME.fullmatch(p) for p in plugins) or len(set(plugins)) != len(plugins):
         raise ValueError("plugins must be a list of unique tool entry-point names")
@@ -52,7 +54,7 @@ def load(root, path=None):
     filename = config_path(root, path)
     if path and not filename.exists():
         raise ValueError(f"Explicit config does not exist: {filename}")
-    return validate(load_json(filename)) if filename.exists() else {"version": 1, "plugins": [], "checks": {}}
+    return validate(load_json(filename, max_bytes=256 * 1024)) if filename.exists() else {"version": 1, "plugins": [], "checks": {}}
 
 
 def init(root):

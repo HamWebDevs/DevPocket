@@ -12,7 +12,9 @@ from . import __version__
 from .common import run
 from .engine import failure, gated_exit
 from .project import validate
-from .reports import apply_baseline
+from .reports import apply_baseline, read_baseline
+
+MAX_REPORT = 8 * 1024 * 1024
 
 
 def invoke(tool, params, root, plugins=(), allow_exec=False, timeout=60, cancel_event=None, cache_policy=None):
@@ -38,19 +40,19 @@ def invoke(tool, params, root, plugins=(), allow_exec=False, timeout=60, cancel_
 
 def pipeline(config, root, jobs=4, allow_exec=False, fail_on="warning", baseline=None, progress=None, use_cache=True):
     validate(config)
-    if not 1 <= jobs <= 8:
+    if type(jobs) is not int or not 1 <= jobs <= 8:
         raise ValueError("--jobs must be between 1 and 8")
     steps = config.get("checks", {})
     if not steps:
         raise ValueError("No checks configured. Run devpocket init and edit .devpocket.json.")
     # Baseline syntax is checked once before any tools execute.
-    if baseline:
-        apply_baseline({"tool": "check", "findings": []}, baseline)
+    baseline = read_baseline(baseline)
     started = time.monotonic()
     pending = set(steps)
     finished = {}
     running = {}
     cancelled = threading.Event()
+    size, exhausted = 0, False
     executor = ThreadPoolExecutor(max_workers=jobs)
     try:
         while pending or running:
@@ -61,9 +63,9 @@ def pipeline(config, root, jobs=4, allow_exec=False, fail_on="warning", baseline
                 if any(dep not in finished for dep in deps):
                     continue
                 pending.remove(name)
-                blocked = any(finished[dep]["status"] not in {"passed", "allowed_failure"} for dep in deps)
+                blocked = exhausted or any(finished[dep]["status"] not in {"passed", "allowed_failure"} for dep in deps)
                 if blocked:
-                    report = failure(steps[name]["tool"], "Skipped because a dependency did not pass")
+                    report = failure(steps[name]["tool"], "Skipped because a dependency or aggregate report budget did not pass")
                     finished[name] = {"name": name, "status": "skipped", "report": report}
                     continue
                 if progress:
@@ -80,9 +82,16 @@ def pipeline(config, root, jobs=4, allow_exec=False, fail_on="warning", baseline
                         report = future.result()
                     except Exception as exc:
                         report = failure(steps[name]["tool"], f"Worker error: {exc}")
+                    weight = len(json.dumps(report, allow_nan=False).encode()) + len(json.dumps(report['findings']).encode())
+                    if exhausted or size + weight > MAX_REPORT - 256 * 1024:
+                        exhausted = True
+                        cancelled.set()
+                        report = failure(steps[name]['tool'], 'Aggregate report exceeds its budget; configure fewer checks')
+                    else:
+                        size += weight
                     report = apply_baseline(report, baseline)
                     code = gated_exit(report, fail_on)
-                    status = "passed" if code == 0 else "allowed_failure" if steps[name].get("allow_failure", False) else "failed"
+                    status = "passed" if code == 0 else "allowed_failure" if steps[name].get("allow_failure", False) and not exhausted else "failed"
                     finished[name] = {"name": name, "status": status, "report": report}
                     if progress:
                         progress(name, status)
@@ -99,6 +108,9 @@ def pipeline(config, root, jobs=4, allow_exec=False, fail_on="warning", baseline
         for finding in step["report"]["findings"]:
             findings.append({**finding, "tool": step["report"]["tool"], "check": step["name"]})
     failed = sum(s["status"] in {"failed", "skipped"} for s in ordered)
-    tool_error = any(s["status"] == "failed" and s["report"]["status"] == "error" for s in ordered)
+    tool_error = exhausted or any(s["status"] == "failed" and s["report"]["status"] == "error" for s in ordered)
     report = {"schema": 1, "version": __version__, "tool": "check", "status": "error" if tool_error else "failed" if failed else "completed", "exit_code": 2 if tool_error else 1 if failed else 0, "summary": f"{len(ordered) - failed}/{len(ordered)} checks passed or were explicitly allowed to fail", "seconds": round(time.monotonic() - started, 4), "findings": findings, "data": {}, "checks": ordered}
-    return apply_baseline(report, baseline)
+    report = apply_baseline(report, baseline)
+    if len(json.dumps(report, allow_nan=False).encode()) > MAX_REPORT:
+        return failure('check', 'Aggregate report exceeds 8 MiB; configure fewer checks')
+    return report

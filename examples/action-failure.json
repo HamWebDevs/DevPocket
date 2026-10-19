@@ -1,0 +1,1 @@
+{"version": 1, "checks": {"missing-import": {"tool": "importdoctor", "input": {"module": "devpocket_example_missing_module"}}}}

@@ -1,6 +1,7 @@
 """Baselines and text, Markdown, JSON and SARIF 2.1.0 renderers."""
 from __future__ import annotations
 import json
+from dataclasses import dataclass
 from pathlib import Path
 from urllib.parse import quote
 
@@ -11,13 +12,27 @@ def key(tool, finding):
     return tool + ":" + finding["fingerprint"]
 
 
-def apply_baseline(report, filename):
-    if not filename:
-        return report
-    baseline = load_json(Path(filename))
+@dataclass(frozen=True)
+class Baseline:
+    fingerprints: frozenset
+
+
+def read_baseline(filename):
+    if isinstance(filename, Baseline) or not filename:
+        return filename
+    baseline = load_json(Path(filename), max_bytes=8 * 1024 * 1024)
     if not isinstance(baseline, dict) or baseline.get("schema") != 1 or not isinstance(baseline.get("fingerprints"), list) or any(not isinstance(x, str) for x in baseline["fingerprints"]):
         raise ValueError("Expected baseline schema 1 with a fingerprints array")
-    known = set(baseline["fingerprints"])
+    if len(baseline['fingerprints']) > 50000 or any(len(x) > 256 for x in baseline['fingerprints']):
+        raise ValueError('Baseline exceeds 50,000 fingerprints or a 256-character key')
+    return Baseline(frozenset(baseline['fingerprints']))
+
+
+def apply_baseline(report, filename):
+    baseline = read_baseline(filename)
+    if not baseline:
+        return report
+    known = baseline.fingerprints
     seen = set()
     for finding in report.get("findings", []):
         identity = key(finding.get("tool", report["tool"]), finding)

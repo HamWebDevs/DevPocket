@@ -1,0 +1,67 @@
+name: DevPocket checks
+description: Project or workspace diagnostics with JSON, SARIF, annotations and a job summary
+author: HamWebDevs
+branding:
+  icon: check-circle
+  color: blue
+inputs:
+  root:
+    description: Project/workspace directory beneath the checked-out workspace
+    default: '.'
+  mode:
+    description: project or workspace
+    default: project
+  config:
+    description: Optional project config or workspace manifest, relative to root
+    default: ''
+  baseline:
+    description: Optional accepted-findings baseline, relative to root
+    default: ''
+  jobs:
+    description: Maximum active isolated workers, 1 through 8
+    default: '4'
+  fail-on:
+    description: error, warning or none; execution failures still fail
+    default: warning
+  allow-exec:
+    description: Explicitly permit command-running tools; plugins remain trusted Python code
+    default: 'false'
+  plugin-requirements:
+    description: Optional requirements file beneath the checkout, explicitly authorizing package installation
+    default: ''
+  python-version:
+    description: Python version for the isolated diagnostic environment
+    default: '3.12'
+outputs:
+  report:
+    description: Absolute path to the complete JSON report
+    value: ${{ steps.checks.outputs.report }}
+  sarif:
+    description: Absolute path to the SARIF report
+    value: ${{ steps.checks.outputs.sarif }}
+  directory:
+    description: Directory containing both reports
+    value: ${{ steps.checks.outputs.directory }}
+  exit-code:
+    description: Diagnostic gate status, including on step failure
+    value: ${{ steps.checks.outputs.exit-code }}
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@v6
+      with:
+        python-version: ${{ inputs.python-version }}
+    - name: Run isolated DevPocket checks
+      id: checks
+      shell: bash
+      env:
+        GITHUB_ACTION_PATH: ${{ github.action_path }}
+        DEVPOCKET_ROOT: ${{ inputs.root }}
+        DEVPOCKET_MODE: ${{ inputs.mode }}
+        DEVPOCKET_CONFIG: ${{ inputs.config }}
+        DEVPOCKET_BASELINE: ${{ inputs.baseline }}
+        DEVPOCKET_JOBS: ${{ inputs.jobs }}
+        DEVPOCKET_FAIL_ON: ${{ inputs.fail-on }}
+        DEVPOCKET_ALLOW_EXEC: ${{ inputs.allow-exec }}
+        DEVPOCKET_REQUIREMENTS: ${{ inputs.plugin-requirements }}
+      run: python "$GITHUB_ACTION_PATH/.github/action.py"

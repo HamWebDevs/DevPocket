@@ -37,3 +37,10 @@ DevPocket is a Python 3.10+ CLI package with no runtime dependencies.
 - Use one globally bounded worker pool with each project's own root/plugins/cache configuration. Expand affected dependents and prerequisites; unmapped/shared/config changes select all.
 - Relocate copies of findings and namespace fingerprints by project before baseline/dependency gates. Never rewrite raw cached reports.
 - Keep strict path/config/aggregate-report bounds and cleanup on interruption or resource exhaustion. A plan digest binds configuration/selection, not filesystem contents or plugin identity.
+
+## Version 1 contracts
+
+- Maintain SDK API v1 and documented config/report meanings; use additive fields or a documented major migration. Keep editor schemas in package data and configuration preflight metadata-only.
+- Load baselines once per invocation, retain bounded JSON reads and enforce the aggregate budget for both project and workspace checks.
+- Action inputs must remain environment values/argv, never shell source. Preserve root containment, isolated installation, host-version constraint, escaped/bounded annotations and artifacts from failed gates.
+- Verify the actual composite Action on all three OSes, and keep the frozen pre-cache API v1 plugin installation test. No PR comments or write-token requirement in the Action.

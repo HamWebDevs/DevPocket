@@ -52,10 +52,20 @@ def write_json(path: Path, data) -> None:
     write_text(path, json.dumps(data, indent=2, sort_keys=True) + "\n")
 
 
-def load_json(path: Path):
-    if path.stat().st_size > 32 * 1024 * 1024:
-        raise ValueError("JSON input exceeds 32 MiB")
-    return json.loads(path.read_text(encoding="utf-8"))
+def load_json(path: Path, max_bytes=32 * 1024 * 1024):
+    path = Path(path)
+    if not path.is_file():
+        raise ValueError("JSON input must be a regular file")
+    with path.open("rb") as stream:
+        payload = stream.read(max_bytes + 1)
+    if len(payload) > max_bytes:
+        raise ValueError(f"JSON input exceeds {max_bytes} bytes")
+    def invalid(value):
+        raise ValueError("JSON numbers must be finite")
+    try:
+        return json.loads(payload, parse_constant=invalid)
+    except (RecursionError, UnicodeError) as exc:
+        raise ValueError("Invalid or excessively nested JSON input") from exc
 
 
 def files(root: Path, extra=()):

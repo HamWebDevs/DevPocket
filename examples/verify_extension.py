@@ -38,11 +38,36 @@ def main():
         module = plugin / 'devpocket_plugin_long_lines' / '__init__.py'
         module.write_text('from pathlib import Path\nPath(' + repr(str(marker)) + ").write_text('loaded')\n" + module.read_text())
         command([sys.executable, '-m', 'pip', 'wheel', '--no-deps', *build_flags, '--wheel-dir', wheels, plugin])
+        # Frozen pre-cache API v1 factory: no optional cache field is supplied.
+        legacy = root / 'legacy'
+        legacy.mkdir()
+        (legacy / 'legacy_contract').mkdir()
+        (legacy / 'pyproject.toml').write_text('''[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+[project]
+name = "devpocket-legacy-contract"
+version = "0.1.0"
+dependencies = ["devpocket-toolkit>=0.3,<2"]
+[project.entry-points."devpocket.tools"]
+legacy-v1 = "legacy_contract:build_tool"
+''')
+        (legacy / 'legacy_contract/__init__.py').write_text('''from devpocket.sdk import Finding, ToolResult, ToolSpec
+def run(context, params):
+    return ToolResult("Legacy API v1", [Finding("legacy-note", "Pre-cache contract still works", severity="note")], {"contract": 1})
+def build_tool():
+    return ToolSpec("legacy-v1", "Frozen API v1 fixture", {"type": "object", "properties": {}, "additionalProperties": False}, run, read_only=True, api_version=1)
+''')
+        command([sys.executable, '-m', 'pip', 'wheel', '--no-deps', *build_flags, '--wheel-dir', wheels, legacy])
         environment = root / 'venv'
         venv.EnvBuilder(with_pip=True).create(environment)
         python = environment / ('Scripts/python.exe' if os.name == 'nt' else 'bin/python')
-        command([python, '-m', 'pip', 'install', '--no-index', '--find-links', wheels, 'devpocket-toolkit', 'devpocket-tool-long-lines'])
+        command([python, '-m', 'pip', 'install', '--no-index', '--find-links', wheels, 'devpocket-toolkit', 'devpocket-tool-long-lines', 'devpocket-legacy-contract'])
         cli = [python, '-m', 'devpocket']
+        command([*cli, 'plugins', 'enable', 'legacy-v1', '--root', project], cwd=project)
+        legacy_result = json.loads(command([*cli, 'run', 'legacy-v1', '--root', project, '--format', 'json'], cwd=project))
+        assert legacy_result['data']['contract'] == 1
+        assert legacy_result['findings'][0]['severity'] == 'note'
         inventory = json.loads(command([*cli, 'plugins', 'list', '--root', project, '--json'], cwd=project))
         assert any(x['name'] == 'long-lines' and not x['enabled'] for x in inventory)
         assert not marker.exists(), 'Discovery imported plugin code'
@@ -89,7 +114,7 @@ def main():
         assert len(replies[3]['result']['structuredContent']['findings']) == 1
         assert not replies[3]['result']['isError']
         command([python, '-m', 'unittest', 'discover', '-v'], cwd=plugin)
-        print('Extension verification passed: real wheels, metadata-only discovery, enable/disable boundary, findings, baseline, cached checks, content invalidation, fresh runs, SARIF, MCP and generated plugin tests.')
+        print('Extension verification passed: frozen pre-cache API v1 compatibility, real wheels, metadata-only discovery, enable/disable boundary, baseline, cached checks, invalidation, SARIF, MCP and generated plugin tests.')
     return 0
 
 if __name__ == '__main__':

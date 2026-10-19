@@ -8,6 +8,8 @@ import shlex
 
 from .common import files
 
+GITHUB_RUNNER_ENV = {'CI', 'GITHUB_WORKSPACE', 'GITHUB_ACTION_PATH', 'GITHUB_OUTPUT', 'GITHUB_STEP_SUMMARY', 'RUNNER_TEMP'}
+
 
 def scan(root):
     findings = []
@@ -67,6 +69,8 @@ def scan(root):
                         and isinstance(node.slice.value, str)):
                     continue
                 key = node.slice.value
+                if p.relative_to(root).parts[0] == '.github' and key in GITHUB_RUNNER_ENV:
+                    continue
                 if not re.fullmatch(r"[A-Z][A-Z0-9_]*", key):
                     continue
                 examples = [root / name for name in (".env.example", ".env.sample", ".env.template")]

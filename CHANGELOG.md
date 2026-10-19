@@ -2,6 +2,16 @@
 
 User-visible changes are recorded here. Repository versions are not PyPI releases.
 
+## 1.0.0 — 2026-10-19
+
+- Establish documented 1.x contracts for SDK API v1, configuration/report schemas, CLI gates and the local MCP/Action interfaces, with an explicit 0.x migration guide.
+- Add a reusable cross-platform GitHub composite Action: isolated installation, optional reviewed plugin requirements, host-version constraints, project/workspace checks, JSON/SARIF outputs, escaped annotations and a bounded job summary. Preserve artifacts and status propagation on failed gates.
+- Add metadata-only configuration preflight and packaged project/workspace editor schemas; accept optional `$schema` hints without network fetching or plugin imports.
+- Bound project aggregate reports like workspace reports, cancel on exhaustion and prevent allowed failures from hiding resource errors.
+- Read baselines once into an immutable snapshot; enforce byte/key bounds and bounded growing-file JSON reads, reject nonfinite JSON and catch dangling output symlinks before execution.
+- Keep SDK API v1 unchanged, freeze a pre-cache plugin compatibility fixture and update new scaffold metadata for the stable host range `>=1,<2`.
+- Test the real Action on Linux/Windows/macOS, including intentionally failed checks and output artifacts. Include Action/schema assets in source/wheel packages and add production CI/compatibility documentation.
+
 ## 0.6.0 — 2026-10-19
 
 - Add reviewable multi-project workspace plans and dependency-aware execution using one globally bounded pool of isolated check workers.

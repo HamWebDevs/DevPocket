@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/HamWebDevs/DevPocket/v1/devpocket/schemas/workspace-v1.json",
+  "title": "DevPocket workspace configuration v1",
+  "description": "Editor assistance. Runtime validation additionally enforces DAG references, paths, resources and installed tool inputs.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096
+    },
+    "version": {
+      "const": 1
+    },
+    "shared_inputs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 1024,
+        "description": "Canonical relative POSIX path; traversal and symlink components are refused at runtime."
+      },
+      "maxItems": 32
+    },
+    "projects": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]{0,63}$"
+      },
+      "minProperties": 1,
+      "maxProperties": 32,
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1024,
+            "description": "Canonical relative POSIX path; traversal and symlink components are refused at runtime."
+          },
+          "config": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1024,
+            "description": "Canonical relative POSIX path; traversal and symlink components are refused at runtime."
+          },
+          "needs": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9-]{0,63}$"
+            },
+            "maxItems": 32,
+            "uniqueItems": true
+          },
+          "watch": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 1024,
+              "description": "Canonical relative POSIX path; traversal and symlink components are refused at runtime."
+            },
+            "maxItems": 32
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "version",
+    "projects"
+  ],
+  "additionalProperties": false
+}

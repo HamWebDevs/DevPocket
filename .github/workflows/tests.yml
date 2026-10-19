@@ -19,6 +19,9 @@ jobs:
       - run: python -m pip install .
       - run: python -m unittest discover -s tests -v
       - run: devpocket --help
+      - run: config-validate --root . --format json
+      - run: devpocket config validate --root examples/workspace --workspace --format json
+      - run: devpocket config schema --kind project
       - run: loglens examples/events.log --json
       - run: importdoctor json --json
       - run: assetguard --root examples/web-dist --max-total-gzip-kib 16
@@ -36,3 +39,44 @@ jobs:
           path: |
             checks.sarif
             workspace.sarif
+  action-integration:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./
+        id: passing
+        with:
+          config: examples/web-checks.json
+      - uses: ./
+        id: failing
+        continue-on-error: true
+        with:
+          config: examples/action-failure.json
+      - uses: ./
+        id: workspace
+        with:
+          root: examples/workspace
+          mode: workspace
+      - run: python examples/verify_action.py
+        env:
+          PASS_REPORT: ${{ steps.passing.outputs.report }}
+          PASS_SARIF: ${{ steps.passing.outputs.sarif }}
+          FAIL_REPORT: ${{ steps.failing.outputs.report }}
+          FAIL_SARIF: ${{ steps.failing.outputs.sarif }}
+          FAIL_OUTCOME: ${{ steps.failing.outcome }}
+          FAIL_EXIT: ${{ steps.failing.outputs.exit-code }}
+          WORKSPACE_REPORT: ${{ steps.workspace.outputs.report }}
+          WORKSPACE_SARIF: ${{ steps.workspace.outputs.sarif }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: action-reports-${{ runner.os }}
+          path: |
+            ${{ steps.passing.outputs.directory }}
+            ${{ steps.failing.outputs.directory }}
+            ${{ steps.workspace.outputs.directory }}

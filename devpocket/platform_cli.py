@@ -11,7 +11,7 @@ from .common import load_json, write_text
 from .engine import Capture, gated_exit
 from .project import init, load, set_plugin
 from .registry import Registry
-from .reports import apply_baseline, create_baseline, render
+from .reports import apply_baseline, create_baseline, read_baseline, render
 from .scaffold import scaffold
 
 
@@ -68,15 +68,14 @@ def execute(args):
             spec = registry.get(args.name)
         print(json.dumps({"name": spec.name, "description": spec.description, "read_only": spec.read_only, "api_version": spec.api_version, "cache_version": spec.cache_version, "input_schema": spec.input_schema}, indent=2))
         return 0
-    if args.output and Path(args.output).exists():
+    if args.output and (Path(args.output).exists() or Path(args.output).is_symlink()):
         raise ValueError("Output already exists; choose a fresh filename before running checks")
     if args.tool == "run":
         raw = args.input
         params = load_json(Path(raw[1:])) if raw.startswith("@") else json.loads(raw)
-        if args.baseline:
-            apply_baseline({"tool": args.name, "findings": []}, args.baseline)
+        baseline = read_baseline(args.baseline)
         report = invoke(args.name, params, root, config.get("plugins", []), args.allow_exec, args.timeout)
-        report = apply_baseline(report, args.baseline)
+        report = apply_baseline(report, baseline)
         emit(args, report)
         return gated_exit(report, args.fail_on)
     if args.tool == "check":

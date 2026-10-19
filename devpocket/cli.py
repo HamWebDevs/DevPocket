@@ -81,6 +81,8 @@ def parser():
     register(tools)
     from .workspace import register as register_workspace
     register_workspace(tools)
+    from .configuration import register as register_configuration
+    register_configuration(tools)
     return p
 
 
@@ -136,3 +138,7 @@ def asset_main():
 
 def workspace_plan_main():
     return main(["workspace", "plan", *sys.argv[1:]])
+
+
+def config_validate_main():
+    return main(['config', 'validate', *sys.argv[1:]])

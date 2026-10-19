@@ -6,7 +6,7 @@ DevPocket discovers installed plugins through the standard Python packaging entr
 
 ## A working plugin in five commands
 
-From a checkout or environment with DevPocket 0.4, 0.5 or 0.6 installed:
+From a checkout or environment with DevPocket 1.x installed:
 
 ```bash
 devpocket plugins scaffold ./my-check --name long-lines
@@ -69,7 +69,7 @@ Register that factory in `pyproject.toml`:
 todo-review = "your_package:build_tool"
 ```
 
-The factory is called with no arguments and must return a `ToolSpec` whose name matches the entry point. The supported SDK is **API v1** (`devpocket.sdk.API_VERSION == 1`), introduced in DevPocket 0.3. Unsupported API versions are rejected. Older API v1 plugins remain valid on 0.4, 0.5 and 0.6. Plugins should declare an appropriate host dependency; the scaffold uses `devpocket-toolkit>=0.4,<0.7` because it demonstrates the optional cache contract and is verified against the current host.
+The factory is called with no arguments and must return a `ToolSpec` whose name matches the entry point. The supported SDK is **API v1** (`devpocket.sdk.API_VERSION == 1`), introduced in DevPocket 0.3. Unsupported API versions are rejected. Older API v1 plugins remain source-compatible with 1.x. Plugins should declare an appropriate host dependency; the scaffold uses `devpocket-toolkit>=1,<2` because it targets the stable 1.x host and demonstrates the optional cache contract. Existing packages with older upper bounds need a reviewed metadata update; see [compatibility](compatibility.md).
 
 ### Types and contracts
 

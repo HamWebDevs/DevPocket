@@ -24,7 +24,7 @@ build-backend = "setuptools.build_meta"
 name = "devpocket-tool-{name}"
 version = "0.1.0"
 requires-python = ">=3.10"
-dependencies = ["devpocket-toolkit>=0.4,<0.7"]
+dependencies = ["devpocket-toolkit>=1,<2"]
 
 [project.entry-points."devpocket.tools"]
 {name} = "{module}:build_tool"
@@ -78,7 +78,7 @@ if __name__ == "__main__":
 
 A complete DevPocket API v1 plugin example. Change the schema, runner and tests to build your own check.
 
-Install DevPocket 0.4, 0.5 or 0.6 first, then install this plugin in the same Python environment:
+Install DevPocket 1.x first, then install this plugin in the same Python environment:
 
 ```bash
 python -m pip install .

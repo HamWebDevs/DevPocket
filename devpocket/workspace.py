@@ -15,7 +15,7 @@ from .checks import invoke
 from .common import write_text
 from .engine import clean, failure, gated_exit
 from .project import validate as validate_project
-from .reports import apply_baseline, render
+from .reports import apply_baseline, read_baseline, render
 from .sdk import Finding, NAME
 
 MAX_CONFIG = 256 * 1024
@@ -80,8 +80,10 @@ def compile_plan(root, manifest=".devpocket-workspace.json", projects=(), change
     if not root.is_dir():
         raise ValueError("Workspace root must be an existing directory")
     config = read_json(contained(root, manifest))
-    if not isinstance(config, dict) or set(config) - {"version", "projects", "shared_inputs"} or type(config.get("version")) is not int or config["version"] != 1:
+    if not isinstance(config, dict) or set(config) - {"$schema", "version", "projects", "shared_inputs"} or type(config.get("version")) is not int or config["version"] != 1:
         raise ValueError("Expected workspace version 1 with projects and optional shared_inputs")
+    if '$schema' in config and (not isinstance(config['$schema'], str) or not 1 <= len(config['$schema']) <= 4096):
+        raise ValueError('$schema must be a schema URL string; it is never fetched')
     definitions = config.get("projects")
     if not isinstance(definitions, dict) or not 1 <= len(definitions) <= 32:
         raise ValueError("A workspace requires 1..32 projects")
@@ -110,7 +112,7 @@ def compile_plan(root, manifest=".devpocket-workspace.json", projects=(), change
             relative(value)
         config_name = definition.get("config", ".devpocket.json")
         configs[name] = validate_project(read_json(contained(target, config_name)))
-        if not configs[name]["checks"]:
+        if not configs[name].get("checks"):
             raise ValueError("Every workspace project must configure at least one check")
         project_nodes[name] = {"needs": needs}
     levels(project_nodes)
@@ -194,7 +196,7 @@ def check(root, manifest=".devpocket-workspace.json", *, projects=(), changed=No
     plan, nodes, roots, configs = compile_plan(root, manifest, projects, changed)
     if expect_plan is not None and (not re.fullmatch(r"[a-f0-9]{64}", expect_plan) or expect_plan != plan["plan_sha256"]):
         raise ValueError("Workspace configuration or selection differs from the expected plan")
-    apply_baseline({"tool": "workspace", "findings": []}, baseline)
+    baseline = read_baseline(baseline)
     pending, finished, running = set(nodes), {}, {}
     cancelled = threading.Event()
     executor = ThreadPoolExecutor(max_workers=jobs)
