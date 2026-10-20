@@ -104,6 +104,15 @@ Read-only, offline heuristics for:
 
 Findings include relative paths and line numbers where available. It does not run setup instructions, package scripts or network checks, validate every dependency constraint, parse every Markdown dialect, or prove a project is correct. Treat findings as review prompts.
 
+## EnvGuard and TestLens
+
+```bash
+envguard --example .env.example --env .env --ignore OPTIONAL_NAME
+testlens reports/unit.xml reports/integration.xml --min-tests 10 --max-skipped 0
+```
+
+Both commands accept `--root` and `--json`; filenames are relative to the selected root. EnvGuard compares names without returning values. TestLens reads already-written JUnit XML and never executes tests. Full schemas, examples, privacy and limits are in the [CI diagnostics guide](ci-tools.md).
+
 ## CLI conventions
 
 Put options **before** the wrapped command and use `--` to separate it. Commands run as argument lists, without a shell, with stdin disconnected. Pipes, redirects and shell built-ins require an explicit shell that you choose, e.g. `-- sh -c '...'` on POSIX. Shell behaviour is then your responsibility.

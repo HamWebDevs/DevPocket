@@ -37,6 +37,8 @@ Use the command/arguments in your client's local MCP server configuration. Some 
 
 | MCP name | Capability |
 | --- | --- |
+| `envguard` | Compare selected dotenv names, empty assignments and duplicates; values are read only for parsing and never returned. |
+| `testlens` | Summarise saved JUnit XML outcomes and enforce test-count/skip gates; failure/log bodies are withheld. |
 | `config-validate` | Offline project/workspace preflight, built-in schema checks and explicit deferred-plugin validation. See [configuration](configuration.md). |
 | `workspace-plan` | Dependency and affected-project plans without executing checks or loading plugins. See [workspaces](workspaces.md). |
 | `assetguard` | Offline production-build inventories, explicit resource checks and size budgets under the project root. |
@@ -47,7 +49,7 @@ Use the command/arguments in your client's local MCP server configuration. Some 
 
 Every tool advertises its input schema. Calls return the DevPocket report in both `structuredContent` and a JSON text content block. Findings are ordinary diagnostic data; `isError` is true only when tool execution fails. The server never exposes the command-running Oopsfile, FlakeTrail or UndoRun adapters.
 
-Repository and log paths are scoped to the selected root. Import/environment diagnostics also inspect the reporting interpreter's normal standard-library and installed-package metadata, which naturally lives outside the project. No environment variable values are collected by those built-ins.
+Repository and log paths are scoped to the selected root. Import/environment diagnostics also inspect the reporting interpreter's normal standard-library and installed-package metadata, which naturally lives outside the project. EnvTwin never collects environment variable values. EnvGuard reads the explicitly selected dotenv files to parse their names and empty assignments, then discards values; it does not consult or modify the process environment. Both new tools refuse symlinked inputs and redirected directories. See [CI diagnostics](ci-tools.md) for syntax, privacy and evidence limits.
 
 ## Explicit plugin exposure
 

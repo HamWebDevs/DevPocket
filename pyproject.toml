@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "devpocket-toolkit"
-version = "1.1.1"
+version = "1.2.0"
 description = "Extensible local developer diagnostics: plugins, parallel checks, SARIF and MCP."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -31,6 +31,8 @@ importdoctor = "devpocket.cli:import_main"
 assetguard = "devpocket.cli:asset_main"
 workspace-plan = "devpocket.cli:workspace_plan_main"
 config-validate = "devpocket.cli:config_validate_main"
+envguard = "devpocket.cli:envguard_main"
+testlens = "devpocket.cli:testlens_main"
 
 [tool.setuptools.packages.find]
 include = ["devpocket*"]
