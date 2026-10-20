@@ -40,8 +40,11 @@ def read_text(root, relative, max_bytes):
         current = path.stat()
     except OSError:
         raise ValueError("Cannot read diagnostic input as a regular project file") from None
-    identity = lambda s: (s.st_dev, s.st_ino, s.st_size, s.st_mtime_ns, s.st_ctime_ns)
-    if any(identity(s) != identity(before) for s in (opened, after, current)) or len(payload) != before.st_size:
+    identity = lambda s: (s.st_dev, s.st_ino, s.st_size, s.st_mtime_ns)
+    version = lambda s: (*identity(s), s.st_ctime_ns)
+    # Windows Python 3.12+ can report creation time via stat(path) and change
+    # time via fstat(fd). Compare ctime only within the same metadata API.
+    if version(before) != version(current) or version(opened) != version(after) or identity(before) != identity(opened) or len(payload) != before.st_size:
         raise ValueError("Diagnostic input changed during inspection; retry with a stable file")
     if len(payload) > max_bytes:
         raise ValueError(f"Diagnostic input exceeds {max_bytes} bytes")

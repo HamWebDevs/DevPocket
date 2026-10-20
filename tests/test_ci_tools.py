@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import tempfile
+from types import SimpleNamespace
 import unittest
 from unittest import mock
 
@@ -70,6 +71,32 @@ class InputTests(TempTest):
             if calls == 2:
                 self.write("a", "changed")
             return real_fstat(fd)
+
+        with mock.patch("devpocket.inputs.os.fstat", side_effect=changed):
+            with self.assertRaisesRegex(ValueError, "changed"):
+                read_text(self.root, "a", 100)
+
+    def test_path_and_handle_ctime_may_differ_but_handle_changes_are_refused(self):
+        self.write("a", "unchanged")
+        original = os.fstat
+        fields = ("st_mode", "st_dev", "st_ino", "st_size", "st_mtime_ns", "st_ctime_ns")
+        calls = 0
+
+        def metadata(fd):
+            nonlocal calls
+            calls += 1
+            value = original(fd)
+            attributes = {key: getattr(value, key) for key in fields}
+            attributes["st_ctime_ns"] += 123
+            return SimpleNamespace(**attributes)
+
+        with mock.patch("devpocket.inputs.os.fstat", side_effect=metadata):
+            self.assertEqual(read_text(self.root, "a", 100), "unchanged")
+
+        def changed(fd):
+            result = metadata(fd)
+            result.st_ctime_ns += calls
+            return result
 
         with mock.patch("devpocket.inputs.os.fstat", side_effect=changed):
             with self.assertRaisesRegex(ValueError, "changed"):
