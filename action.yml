@@ -1,5 +1,5 @@
-name: DevPocket checks
-description: Project or workspace diagnostics with JSON, SARIF, annotations and a job summary
+name: DevPocket CI Diagnostics
+description: Run local-first project and workspace diagnostics in GitHub Actions with JSON, SARIF and annotations
 author: HamWebDevs
 branding:
   icon: check-circle

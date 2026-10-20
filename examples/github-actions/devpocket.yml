@@ -1,0 +1,31 @@
+# Copy into .github/workflows/devpocket.yml in the repository being checked.
+# First run `devpocket init` locally, review and commit .devpocket.json.
+name: DevPocket diagnostics
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnostics:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Run DevPocket
+        id: devpocket
+        uses: HamWebDevs/DevPocket@v1
+        with:
+          root: .
+          mode: project
+          jobs: '4'
+          fail-on: warning
+      - name: Upload complete diagnostic reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: devpocket-reports
+          path: ${{ steps.devpocket.outputs.directory }}
+          if-no-files-found: warn

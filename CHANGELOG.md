@@ -2,6 +2,13 @@
 
 User-visible changes are recorded here. Repository versions are not PyPI releases.
 
+## 1.1.1 — 2026-10-20
+
+- Improve first-run positioning and provide a complete copyable GitHub Actions workflow for project diagnostics.
+- Add a Marketplace launch checklist, positioning/categorisation guidance and clear boundaries for analytics and publishing.
+- Give the Marketplace action a more specific name and concise discoverable description; retain the same inputs, outputs and API v1 contract.
+- Keep the local CLI, offline diagnostics, SARIF output and release checks unchanged.
+
 ## 1.1.0 — 2026-10-19
 
 - Extend AssetGuard to inspect literal CSS imports, fonts and image URLs in every non-private stylesheet, with stylesheet-relative resolution and deployment-prefix checks.

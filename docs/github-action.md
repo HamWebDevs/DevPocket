@@ -1,6 +1,6 @@
 # GitHub Action
 
-[Back to DevPocket](../README.md) · [Configuration preflight](configuration.md) · [v1 compatibility](compatibility.md)
+[Back to DevPocket](../README.md) · [Marketplace launch](marketplace.md) · [Copyable workflow](../examples/github-actions/devpocket.yml) · [Configuration preflight](configuration.md) · [v1 compatibility](compatibility.md)
 
 Use the repository's composite Action to run project or workspace checks in an isolated Python environment. It produces complete JSON and SARIF files, up to 50 new-finding annotations and a job summary. The gate propagates to the workflow even when reports are produced on failure. It needs no GitHub token or write permission.
 

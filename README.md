@@ -5,13 +5,26 @@
 [![MIT licence](https://img.shields.io/badge/licence-MIT-82edc4)](LICENSE)
 ![Runtime dependencies: zero](https://img.shields.io/badge/runtime_dependencies-zero-82edc4)
 
-**An extensible toolkit for local developer diagnostics.**
+**Catch build mistakes and configuration problems before they ship.** Run no-account, local-first project and workspace diagnostics in GitHub Actions or on your laptop. Export JSON/SARIF evidence, review missing assets, and extend checks with plugins.
 
 **Version 1:** installable CLI, stable SDK API v1, configuration/editor contracts and a reusable GitHub Action. [Compatibility and upgrading](docs/compatibility.md) · [CI integration](docs/github-action.md)
 
 Ten built-in SDK tools, production-build audits, dependency-aware workspace checks, a versioned plugin SDK, opt-in content-addressed caching, baseline-aware quality gates and MCP connectivity. Run diagnostics locally, wire them into CI, or let a coding assistant call the same tools — without a hosted service or runtime dependencies.
 
-[Quick start](#quick-start) · [Build a plugin](#build-and-connect-your-own-tools) · [MCP](docs/mcp.md) · [The toolkit](#the-toolkit) · [Documentation](#documentation) · [Contributing](CONTRIBUTING.md) · [Changelog](CHANGELOG.md)
+[GitHub Marketplace publishing guide](docs/marketplace.md) · [Copyable CI workflow](examples/github-actions/devpocket.yml) · [Quick start](#quick-start) · [Build a plugin](#build-and-connect-your-own-tools) · [MCP](docs/mcp.md) · [The toolkit](#the-toolkit) · [Documentation](#documentation) · [Contributing](CONTRIBUTING.md) · [Changelog](CHANGELOG.md)
+
+## Try it in GitHub Actions
+
+DevPocket is a **free, open-source GitHub Action** and installable Python CLI. No DevPocket account, hosted dashboard, access token or paid plan is needed. Checkout your code, commit a `.devpocket.json` configuration, and add this step:
+
+```yaml
+- uses: HamWebDevs/DevPocket@v1
+  with:
+    root: .
+    fail-on: warning
+```
+
+Read the [complete copyable workflow](examples/github-actions/devpocket.yml), [configuration setup](docs/project-checks.md), and [Marketplace publication checklist](docs/marketplace.md). The repository release tag `v1` tracks verified v1 releases; pin a full commit SHA for stricter reproducibility. A configuration is required: the Action does not silently approve a missing one.
 
 ## Put the same checks in CI
 
