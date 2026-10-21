@@ -9,7 +9,7 @@
 
 **Version 1:** installable CLI, stable SDK API v1, configuration/editor contracts and a reusable GitHub Action. [Compatibility and upgrading](docs/compatibility.md) · [CI integration](docs/github-action.md)
 
-Ten built-in SDK tools, production-build audits, dependency-aware workspace checks, a versioned plugin SDK, opt-in content-addressed caching, baseline-aware quality gates and MCP connectivity. Run diagnostics locally, wire them into CI, or let a coding assistant call the same tools — without a hosted service or runtime dependencies.
+Twelve built-in SDK tools, production-build audits, dependency-aware workspace checks, a versioned plugin SDK, opt-in content-addressed caching, baseline-aware quality gates and MCP connectivity. Run diagnostics locally, wire them into CI, or let a coding assistant call the same tools — without a hosted service or runtime dependencies.
 
 [GitHub Marketplace publishing guide](docs/marketplace.md) · [Copyable CI workflow](examples/github-actions/devpocket.yml) · [Quick start](#quick-start) · [Build a plugin](#build-and-connect-your-own-tools) · [MCP](docs/mcp.md) · [The toolkit](#the-toolkit) · [Documentation](#documentation) · [Contributing](CONTRIBUTING.md) · [Changelog](CHANGELOG.md)
 
@@ -66,7 +66,7 @@ python -m devpocket loglens examples/events.log
 python -m devpocket importdoctor json
 ```
 
-Requires **Python 3.10+**. After cloning, `python -m pip install .` adds `devpocket` and ten standalone aliases, including `workspace-plan`. Versioned wheels are also available in [GitHub releases](https://github.com/HamWebDevs/DevPocket/releases). This project is not published to PyPI.
+Requires **Python 3.10+**. After cloning, `python -m pip install .` adds `devpocket` and twelve standalone aliases, including `workspace-plan`, `envguard` and `testlens`. Versioned wheels are also available in [GitHub releases](https://github.com/HamWebDevs/DevPocket/releases). This project is not published to PyPI.
 
 ## Coordinate a whole workspace
 
@@ -89,6 +89,17 @@ assetguard --root dist --baseline artifacts/build-before.json --max-growth-kib 3
 **AssetGuard** measures raw/gzip sizes, catches missing HTML resources, CSS imports, fonts, background images and deployment-path mistakes, flags private files and source maps, and finds identical content across renamed chunks. Stylesheet references resolve from their own file locations; malformed CSS coverage is reported explicitly. Choose total, individual-asset and growth budgets for CI. It works on finished artifacts from any toolchain and executes no target code. Gzip estimates describe build files; they are not browser transfer or route-performance measurements.
 
 Try `assetguard --root examples/web-dist` from this checkout. [Build comparisons, budgets, SARIF and MCP →](docs/assetguard.md)
+
+## Check environment setup and saved test results
+
+```bash
+devpocket envguard --example .env.example --env .env
+devpocket testlens reports/junit.xml --min-tests 10 --max-skipped 0
+```
+
+**EnvGuard** compares environment-variable names, catches missing/empty assignments and duplicate or undocumented names, and withholds every value. **TestLens** reads saved JUnit XML, combines shard counts, flags mixed recorded outcomes and preserves failed-test gates even when findings are baselined. Neither tool runs target code. Both connect to project/workspace checks, JSON, SARIF and MCP. [CI diagnostic tools and limits →](docs/ci-tools.md)
+
+Try `devpocket check --config examples/ci-checks.json` in this checkout for a complete passing example.
 
 ## Configure checks once
 
@@ -144,6 +155,8 @@ Configure a compatible MCP client to launch the local stdio server. It exposes r
 
 | Command | Use it when… | Guide |
 | --- | --- | --- |
+| **`envguard`** | Environment setup differs from its example and you need names-only diagnostics. | [Environment and test evidence](docs/ci-tools.md) |
+| **`testlens`** | Saved JUnit test reports need one summary and explicit test/skip gates. | [Environment and test evidence](docs/ci-tools.md) |
 | **`config-validate`** | You want a configuration preflight with no check execution or plugin imports. | [Configuration contracts](docs/configuration.md) |
 | **`workspace-plan`** | Several project roots share prerequisites and you need a reviewable dependency plan. Execute it with `devpocket workspace check`. | [Workspace checks](docs/workspaces.md) |
 | **`assetguard`** | You need to review production assets, resource links and build-size regressions before deployment. | [Build auditing](docs/assetguard.md) |

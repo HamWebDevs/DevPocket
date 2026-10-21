@@ -77,6 +77,22 @@ def parser():
     a.add_argument("--max-growth-kib", type=float, help="Maximum gzip growth in KiB; requires --baseline")
     a.add_argument("--json", action="store_true")
     a.set_defaults(handler=assetguard.execute)
+    from . import envguard, testlens
+    e = tools.add_parser("envguard", help="Compare dotenv names without exposing their values")
+    e.add_argument("--root", default=".")
+    e.add_argument("--example", default=".env.example", help="Reference template, relative to root")
+    e.add_argument("--env", default=".env", help="Target dotenv file, relative to root")
+    e.add_argument("--ignore", action="append", default=[], help="Optional name to ignore; repeatable")
+    e.add_argument("--allow-extra", action="store_true", help="Allow names undocumented in the template")
+    e.add_argument("--json", action="store_true")
+    e.set_defaults(handler=envguard.execute)
+    t = tools.add_parser("testlens", help="Summarise saved JUnit XML without running tests")
+    t.add_argument("paths", nargs="+", help="JUnit XML inputs, relative to root")
+    t.add_argument("--root", default=".")
+    t.add_argument("--min-tests", type=int, default=1)
+    t.add_argument("--max-skipped", type=int)
+    t.add_argument("--json", action="store_true")
+    t.set_defaults(handler=testlens.execute)
     from .platform_cli import register
     register(tools)
     from .workspace import register as register_workspace
@@ -142,3 +158,11 @@ def workspace_plan_main():
 
 def config_validate_main():
     return main(['config', 'validate', *sys.argv[1:]])
+
+
+def envguard_main():
+    return main(["envguard", *sys.argv[1:]])
+
+
+def testlens_main():
+    return main(["testlens", *sys.argv[1:]])

@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "checks": {
+    "environment": {
+      "tool": "envguard",
+      "input": {"example": "examples/ci/reference.env", "env": "examples/ci/target.env"}
+    },
+    "test-results": {
+      "tool": "testlens",
+      "input": {"paths": ["examples/ci/junit.xml"], "min_tests": 2, "max_skipped": 0}
+    }
+  }
+}

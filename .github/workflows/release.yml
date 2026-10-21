@@ -84,6 +84,8 @@ jobs:
           workspace-plan --root "$GITHUB_WORKSPACE/examples/workspace" --format json
           devpocket workspace check --root "$GITHUB_WORKSPACE/examples/workspace" --format sarif
           devpocket tools list --json
+          envguard --root "$GITHUB_WORKSPACE" --example examples/ci/reference.env --env examples/ci/target.env --json
+          testlens --root "$GITHUB_WORKSPACE" examples/ci/junit.xml --min-tests 2 --max-skipped 0 --json
           assetguard --root "$GITHUB_WORKSPACE/examples/web-dist" --max-total-gzip-kib 16
           python -c "import json, subprocess; r=json.loads(subprocess.check_output(['assetguard','--root','$GITHUB_WORKSPACE/examples/web-dist','--json'])); assert r['summary']['css_stylesheets'] == 1"
       - name: Prepare release notes and checksums

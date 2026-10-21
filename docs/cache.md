@@ -53,4 +53,6 @@ Hashing is bounded to 10,000 entries and 64 MiB per snapshot. Storage retains at
 
 ## Plugin authors
 
+The built-in `testlens` tool supports caching when every XML input is declared in `cache.inputs`. Failed tests, failed count gates and malformed reports are never cached as successes. EnvGuard remains uncached so its sensitive dotenv inputs are not added to this workflow by default. See [CI diagnostics](ci-tools.md).
+
 Set `ToolSpec(..., cache_version="your-check-v1")` only for deterministic read-only tools whose dependencies users can completely declare. Change the contract version when interpretation changes. The field is optional; older API v1 plugins remain valid and are uncached by default. Using this new field requires DevPocket 0.4 or later. The scaffold now generates a compatible example and host dependency.

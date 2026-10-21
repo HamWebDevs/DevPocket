@@ -2,6 +2,6 @@ include LICENSE README.md CHANGELOG.md CONTRIBUTING.md SECURITY.md AGENTS.md
 include action.yml
 recursive-include .github *.py *.yml
 recursive-include docs *.md *.svg
-recursive-include examples *.py *.toml *.md *.log *.json *.html *.css *.js
+recursive-include examples *.py *.toml *.md *.log *.json *.html *.css *.js *.env *.xml
 recursive-include tests *.py *.json
 global-exclude *.py[cod]

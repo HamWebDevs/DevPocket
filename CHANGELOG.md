@@ -2,6 +2,15 @@
 
 User-visible changes are recorded here. Repository versions are not PyPI releases.
 
+## 1.2.0 — 2026-10-21
+
+- Add EnvGuard: compare dotenv names against an example, locate missing/empty assignments, duplicates and undocumented keys, and never evaluate or return values.
+- Parse quoted multiline values without treating their contents as variable names; support explicit optional-name and extra-name policies.
+- Add TestLens: aggregate saved JUnit XML shards, count actual testcase outcomes, flag mixed recorded outcomes and enforce minimum-test/maximum-skip gates. Failed tests remain failed through finding baselines and disabled severity gates.
+- Reject incomplete counter declarations, malformed XML, DTDs/entities, unsafe paths, symlinks, redirected directories, observed file mutations and oversized inputs. Withhold JUnit log/failure bodies and dotenv values.
+- Connect both tools to standalone aliases, CLI, project/workspace checks, JSON/SARIF and read-only MCP. Opt-in TestLens caching requires every XML input; EnvGuard stays uncached.
+- Include a passing CI example, installed-wheel smoke checks and privacy/evidence regression tests. Preserve SDK API v1, configuration schemas and zero runtime dependencies.
+
 ## 1.1.1 — 2026-10-20
 
 - Improve first-run positioning and provide a complete copyable GitHub Actions workflow for project diagnostics.
