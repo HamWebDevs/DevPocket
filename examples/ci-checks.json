@@ -7,7 +7,7 @@
     },
     "test-results": {
       "tool": "testlens",
-      "input": {"paths": ["examples/ci/junit.xml"], "min_tests": 2, "max_skipped": 0}
+      "input": {"paths": ["examples/ci/junit.xml"], "min_tests": 2, "max_skipped": 0, "max_test_seconds": 1}
     }
   }
 }

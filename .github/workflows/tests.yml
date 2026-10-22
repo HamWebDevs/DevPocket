@@ -32,7 +32,7 @@ jobs:
       - run: devpocket check --config examples/web-checks.json --format json
       - run: devpocket check --config examples/ci-checks.json --format json
       - run: envguard --example examples/ci/reference.env --env examples/ci/target.env --json
-      - run: testlens examples/ci/junit.xml --min-tests 2 --max-skipped 0 --json
+      - run: testlens examples/ci/junit.xml --min-tests 2 --max-skipped 0 --max-test-seconds 1 --json
       - run: workspace-plan --root examples/workspace --format json
       - run: devpocket workspace check --root examples/workspace --format sarif --output workspace.sarif
       - run: python -m devpocket reporadar --root .
