@@ -178,6 +178,53 @@ class TestLensTests(TempTest):
         self.write("junit.xml", xml)
         return execute("testlens", {"paths": ["junit.xml"], **params}, self.root)
 
+    def test_recorded_durations_rank_without_exposing_log_bodies(self):
+        report = self.inspect('<testsuite><testcase name="fast" time="0"/><testcase name="slow" time="1.25"><system-out>private-body</system-out></testcase><testcase name="unknown"/></testsuite>')
+        timing = report["data"]["timing"]
+        self.assertEqual((timing["timed_records"], timing["missing_records"], timing["known_sum_seconds"]), (2, 1, 1.25))
+        self.assertIsNone(timing["max_seconds"])
+        self.assertEqual(timing["known_max_seconds"], 1.25)
+        self.assertEqual([row["label"] for row in timing["slowest"]], ["slow", "fast"])
+        self.assertEqual(timing["gate"], "not evaluated")
+        self.assertNotIn("private-body", json.dumps(report))
+
+    def test_duration_gate_preserves_zero_equality_missing_and_known_overage(self):
+        for xml, limit, state in (
+            ('<testsuite><testcase name="a" time="0"/></testsuite>', 0, "pass"),
+            ('<testsuite><testcase name="a" time="1.5"/></testsuite>', 1.5, "pass"),
+            ('<testsuite><testcase name="a"/></testsuite>', 1, "unknown"),
+            ('<testsuite/>', 1, "unknown"),
+            ('<testsuite><testcase name="a" time="2"/><testcase name="b"/></testsuite>', 1, "fail"),
+        ):
+            with self.subTest(state=state, xml=xml):
+                report = self.inspect(xml, max_test_seconds=limit, min_tests=0)
+                self.assertEqual(report["data"]["timing"]["gate"], state)
+                self.assertEqual(gated_exit(report, "none"), int(state != "pass"))
+
+    def test_invalid_or_nonfinite_test_times_are_private_errors(self):
+        for value in ("NaN", "inf", "-1", "1,2", "private-invalid-time", "1e9999", "1000000001", ""):
+            with self.subTest(value=value):
+                report = self.inspect(f'<testsuite><testcase name="a" time="{value}"/></testsuite>')
+                self.assertEqual(report["status"], "error")
+                self.assertNotIn("private-invalid-time", json.dumps(report))
+
+    def test_slowest_details_are_bounded_and_all_records_affect_the_gate(self):
+        xml = '<testsuite>' + ''.join(f'<testcase name="test{i}" time="{i}"/>' for i in range(12)) + '</testsuite>'
+        timing = self.inspect(xml, max_test_seconds=10)["data"]["timing"]
+        self.assertEqual((len(timing["slowest"]), timing["details_omitted"], timing["gate"]), (10, 2, "fail"))
+        self.assertEqual(timing["slowest"][0]["seconds"], 11)
+
+    def test_duration_gate_reaches_cli_worker_and_cache(self):
+        self.write("junit.xml", '<testsuite><testcase name="slow" time="3"/></testsuite>')
+        code, report = self.run_cli("testlens", "junit.xml", "--max-test-seconds", "2")
+        self.assertEqual(code, 1)
+        self.assertEqual(report["data"], invoke("testlens", {"paths": ["junit.xml"], "max_test_seconds": 2}, self.root)["data"])
+        config = {"version": 1, "checks": {"tests": {"tool": "testlens", "input": {"paths": ["junit.xml"], "max_test_seconds": 4}, "cache": {"inputs": ["junit.xml"]}}}}
+        pipeline(config, self.root)
+        self.assertEqual(pipeline(config, self.root)["checks"][0]["report"]["cache"]["status"], "hit")
+        config["checks"]["tests"]["input"]["max_test_seconds"] = 2
+        self.assertEqual(pipeline(config, self.root, fail_on="none")["exit_code"], 1)
+
     def test_counts_nested_suites_namespaces_and_body_privacy(self):
         result = self.inspect('''<testsuites xmlns="urn:junit" tests="4" failures="1" errors="1" skipped="1"><testsuite tests="4"><testsuite><testcase name="ok"/><testcase name="failed"><failure message="private-message">private-stack</failure><system-out>private-output</system-out></testcase></testsuite><testcase name="broken"><error>private-error</error></testcase><testcase name="skip"><skipped/></testcase></testsuite></testsuites>''')
         self.assertEqual(result["status"], "failed")

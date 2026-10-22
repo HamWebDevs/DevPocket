@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <testsuites tests="2" failures="0" errors="0" skipped="0">
   <testsuite name="synthetic-demo" tests="2" failures="0" errors="0" skipped="0">
-    <testcase classname="demo" name="environment_names"/>
-    <testcase classname="demo" name="finished_build"/>
+    <testcase classname="demo" name="environment_names" time="0.02"/>
+    <testcase classname="demo" name="finished_build" time="0.15"/>
   </testsuite>
 </testsuites>

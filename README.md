@@ -9,6 +9,8 @@
 
 **Version 1:** installable CLI, stable SDK API v1, configuration/editor contracts and a reusable GitHub Action. [Compatibility and upgrading](docs/compatibility.md) · [CI integration](docs/github-action.md)
 
+TestLens now surfaces slow recorded tests and incomplete timing evidence, with optional per-test duration budgets. [CI evidence guide](docs/ci-tools.md).
+
 Twelve built-in SDK tools, production-build audits, dependency-aware workspace checks, a versioned plugin SDK, opt-in content-addressed caching, baseline-aware quality gates and MCP connectivity. Run diagnostics locally, wire them into CI, or let a coding assistant call the same tools — without a hosted service or runtime dependencies.
 
 [GitHub Marketplace publishing guide](docs/marketplace.md) · [Copyable CI workflow](examples/github-actions/devpocket.yml) · [Quick start](#quick-start) · [Build a plugin](#build-and-connect-your-own-tools) · [MCP](docs/mcp.md) · [The toolkit](#the-toolkit) · [Documentation](#documentation) · [Contributing](CONTRIBUTING.md) · [Changelog](CHANGELOG.md)

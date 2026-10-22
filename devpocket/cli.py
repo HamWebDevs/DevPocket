@@ -91,6 +91,7 @@ def parser():
     t.add_argument("--root", default=".")
     t.add_argument("--min-tests", type=int, default=1)
     t.add_argument("--max-skipped", type=int)
+    t.add_argument("--max-test-seconds", type=float, help="Require every testcase to have a recorded time within this limit")
     t.add_argument("--json", action="store_true")
     t.set_defaults(handler=testlens.execute)
     from .platform_cli import register

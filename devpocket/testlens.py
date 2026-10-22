@@ -4,6 +4,7 @@ from __future__ import annotations
 from collections import defaultdict
 import hashlib
 import io
+import math
 from pathlib import PurePosixPath
 import re
 import xml.etree.ElementTree as ET
@@ -16,6 +17,18 @@ MAX_BYTES = 4 * 1024 * 1024
 MAX_TOTAL_BYTES = 16 * 1024 * 1024
 MAX_ELEMENTS = 100000
 MAX_CASES = 20000
+MAX_SECONDS = 1e9
+
+
+def _seconds(value):
+    if value is None:
+        return None
+    if not re.fullmatch(r"(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?", value):
+        raise ValueError("JUnit testcase times must be finite non-negative seconds; input value withheld")
+    number = float(value)
+    if not math.isfinite(number) or number > MAX_SECONDS:
+        raise ValueError("JUnit testcase time exceeds the supported range; input value withheld")
+    return number
 
 
 def _label(value):
@@ -62,7 +75,7 @@ def _records(text, path):
                     if state not in {None, "run", "notrun"} or result not in {None, "completed", "skipped", "suppressed"}:
                         raise ValueError("Unsupported JUnit testcase status/result dialect; outcomes cannot be inferred safely")
                     markers = {"skipped"} if state == "notrun" or result in {"skipped", "suppressed"} else set()
-                    case = {"identity": identity, "label": _label((group + "::" if group else "") + name), "path": path, "markers": markers}
+                    case = {"identity": identity, "label": _label((group + "::" if group else "") + name), "path": path, "markers": markers, "seconds": _seconds(node.get("time"))}
                 elif tag in {"failure", "error", "skipped"}:
                     if case is None or parent != "testcase":
                         raise ValueError("JUnit outcome markers require a direct testcase parent")
@@ -131,10 +144,26 @@ def inspect(context, params):
     too_many_skips = skip_limit is not None and skipped > skip_limit
     if too_many_skips:
         findings.append(Finding("test-skipped-budget", f"Found {skipped} skipped records; at most {skip_limit} allowed", "error"))
+    timed = sorted((row for row in records if row["seconds"] is not None), key=lambda row: (-row["seconds"], row["path"], row["identity"]))
+    time_limit = params.get("max_test_seconds")
+    timing_gate = "not evaluated"
+    known_max = timed[0]["seconds"] if timed else None
+    if time_limit is not None:
+        timing_gate = "fail" if known_max is not None and known_max > time_limit else "pass" if records and len(timed) == len(records) else "unknown"
+        if timing_gate != "pass":
+            findings.append(Finding("test-duration-budget", "A recorded testcase exceeds the duration budget" if timing_gate == "fail" else "Cannot verify the testcase duration budget: timing records are missing", "error", timed[0]["path"] if timing_gate == "fail" else None,
+                                    help="The gate covers every testcase record, including repeated or skipped records. Missing time is unknown, not zero; XML durations are reported evidence, not independently measured wall time."))
+    timing = {"timed_records": len(timed), "missing_records": len(records) - len(timed), "known_sum_seconds": sum(row["seconds"] for row in timed),
+              "known_max_seconds": known_max, "max_seconds": known_max if records and len(timed) == len(records) else None,
+              "max_test_seconds": time_limit, "gate": timing_gate,
+              "slowest": [{key: row[key] for key in ("label", "path", "outcome", "seconds")} for row in timed[:10]],
+              "details_omitted": max(0, len(timed) - 10),
+              "interpretation": "Reported testcase seconds, including retries and duplicates. The sum is not wall-clock duration; tests may overlap or run in parallel. Missing times stay unknown."}
     data = {"files": len(paths), "tests": len(records), "passed": len(records) - failures - errors - skipped, "failures": failures, "errors": errors, "skipped": skipped, "identities": len(grouped), "repeated_identities": sum(len(rows) > 1 for rows in grouped.values()), "mixed_outcomes": mixed, "min_tests": minimum, "max_skipped": skip_limit, "bodies": "withheld", "interpretation": "Counts describe XML testcase records, including retries and duplicates; no tests were executed."}
+    data["timing"] = timing
     # Failed tests and configured count gates are operational evidence: a finding
     # baseline must not turn them into a passing test run.
-    return ToolResult(f"JUnit evidence: {len(records)} records, {failures} failures, {errors} errors, {skipped} skipped", findings, data, exit_code=int(bool(failures or errors or too_few or too_many_skips)))
+    return ToolResult(f"JUnit evidence: {len(records)} records, {failures} failures, {errors} errors, {skipped} skipped", findings, data, exit_code=int(bool(failures or errors or too_few or too_many_skips or timing_gate in {"fail", "unknown"})))
 
 
 def execute(args):
@@ -144,6 +173,8 @@ def execute(args):
     params = {"paths": args.paths, "min_tests": args.min_tests}
     if args.max_skipped is not None:
         params["max_skipped"] = args.max_skipped
+    if args.max_test_seconds is not None:
+        params["max_test_seconds"] = args.max_test_seconds
     report = run("testlens", params, args.root)
     print(json.dumps(report, indent=2) if args.json else render(report), end="\n" if args.json else "")
     return gated_exit(report)
