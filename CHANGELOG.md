@@ -2,6 +2,13 @@
 
 User-visible changes are recorded here. Repository versions are not PyPI releases.
 
+## 1.3.0 — 2026-10-22
+
+- Add TestLens timing coverage and a bounded slowest-test ranking from saved JUnit testcase durations, with zero distinct from missing data.
+- Add `--max-test-seconds` / `max_test_seconds` across CLI, project/workspace checks and MCP. Known overages fail; incomplete timing cannot certify a pass, including under disabled severity gates or baselines.
+- Keep reported sums distinct from elapsed wall time, with all records included and ranking omissions explicit. Refuse invalid/nonfinite timing without echoing private input.
+- Update the TestLens cache version and exercise CLI/worker/cache, timing/privacy and boundary behavior. Preserve SDK API v1 and zero runtime dependencies.
+
 ## 1.2.0 — 2026-10-21
 
 - Add EnvGuard: compare dotenv names against an example, locate missing/empty assignments, duplicates and undocumented keys, and never evaluate or return values.
